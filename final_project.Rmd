@@ -1,0 +1,12 @@
+---
+title: "final_project"
+author: "Vivian Zhang"
+date: "2/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Scrape data from: https://en.wikipedia.org/wiki/Member_state_of_the_European_Union
