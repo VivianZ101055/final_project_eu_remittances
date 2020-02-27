@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readxl)
 library(janitor)
 library(tidyverse)
+library(rvest)
 
 ```
 
@@ -22,7 +23,25 @@ usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
   clean_names()
 ```
 
-```{r}
+```{r scraping data}
+
+eu_members <- read_html('https://en.wikipedia.org/wiki/Member_state_of_the_European_Union', skip = 0)
+
+eu_member_info <- eu_members %>%
+  html_nodes("table") %>%
+  `[[`(8) %>%
+  html_table()
+
+gold_medals_scraping <- gold_medals_scraping[,2:3]
+
+names(gold_medals_scraping) <- c("Country", "Gold Medals")
+
+gold_medals_scraping <- gold_medals_scraping %>%
+  mutate(Country = factor(Country, levels = Country)) %>%
+  filter(Country != "Totals (10 nations)")
+
+gold_medals_scraping %>%
+  ggplot(aes(x=Country, y=`Gold Medals`)) + geom_col() + ggtitle("Number of Gold Medals in 2008 Beijing Olympics")
 
 ```
 
