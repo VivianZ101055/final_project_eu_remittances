@@ -30,13 +30,29 @@ eumemberinfo <- eumemberinfo[[1]]
 
 ```{r dataset, include=FALSE}
 
+remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
+  clean_names()
+
 percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
   clean_names()
 
-eu_percent_gdp <- eumemberinfo %>%
-  left_join(percent_gdp, by = c("Name", country_name))
+eu_remittance_inflows <- eumemberinfo %>%
+  left_join(remittance_inflows, by = c("Name" = "migrant_remittance_inflows_us_million")) %>%
+  merge(percent_gdp, by = c("Name" = "country_name"))
 
-percent_gdp <- percent_gdp %>%
+# eu_remittances <- eu_remittance_inflows %>%
+#   left_join(percent_gdp, by = c("Name" = "country_name"))
+# 
+# eu_percent_gdp <- eumemberinfo %>%
+#   semi_join(percent_gdp, by = c("Name" = "country_name"))
+
+usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
+  clean_names()
+
+eu_remittances_usd <- eumemberinfo %>%
+  left_join(usd, by = c("Name" = "country_name"))
+
+usd <- usd %>%
   pivot_longer(
     cols = starts_with("x"),
     names_to = "year",
