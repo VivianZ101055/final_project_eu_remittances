@@ -7,6 +7,24 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(readxl)
+library(janitor)
+library(tidyverse)
+
 ```
+
+```{r dataset, include=FALSE}
+percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
+  clean_names()
+
+usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
+  clean_names()
+```
+
+```{r}
+
+```
+
 
 # Scrape data from: https://en.wikipedia.org/wiki/Member_state_of_the_European_Union
