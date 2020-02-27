@@ -12,38 +12,47 @@ library(readxl)
 library(janitor)
 library(tidyverse)
 library(rvest)
+library(magrittr)
 
-```
-
-```{r dataset, include=FALSE}
-percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
-  clean_names()
-
-usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
-  clean_names()
 ```
 
 ```{r scraping data}
 
 eu_members <- read_html('https://en.wikipedia.org/wiki/Member_state_of_the_European_Union', skip = 0)
 
-eu_member_info <- eu_members %>%
-  html_nodes("table") %>%
-  `[[`(8) %>%
+eumemberinfo <- eu_members %>%
+  html_nodes(xpath='//*[@id="mw-content-text"]/div/table[5]') %>%
   html_table()
 
-gold_medals_scraping <- gold_medals_scraping[,2:3]
-
-names(gold_medals_scraping) <- c("Country", "Gold Medals")
-
-gold_medals_scraping <- gold_medals_scraping %>%
-  mutate(Country = factor(Country, levels = Country)) %>%
-  filter(Country != "Totals (10 nations)")
-
-gold_medals_scraping %>%
-  ggplot(aes(x=Country, y=`Gold Medals`)) + geom_col() + ggtitle("Number of Gold Medals in 2008 Beijing Olympics")
+eumemberinfo <- eumemberinfo[[1]]
 
 ```
 
+```{r dataset, include=FALSE}
 
-# Scrape data from: https://en.wikipedia.org/wiki/Member_state_of_the_European_Union
+percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
+  clean_names()
+
+eu_percent_gdp <- eumemberinfo %>%
+  left_join(percent_gdp, by = c("Name", country_name))
+
+percent_gdp <- percent_gdp %>%
+  pivot_longer(
+    cols = starts_with("x"),
+    names_to = "year",
+    names_prefix = "yr"
+               )
+
+usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
+  clean_names()
+
+full_world_data <- percent_gdp %>%
+  inner_join(usd, by = "country_name")
+
+full_world_data
+```
+
+```{r}
+
+```
+
