@@ -26,6 +26,16 @@ eumemberinfo <- eu_members %>%
 
 eumemberinfo <- eumemberinfo[[1]]
 
+# Keep editing here
+
+  sapply(1:27(eumemberinfo), gsub("[...]", ""))
+
+eumemberinfo
+
+
+eumemberinfo <- eumember_info %>%
+  gsub("[...]", "")
+
 ```
 
 ```{r dataset, include=FALSE}
