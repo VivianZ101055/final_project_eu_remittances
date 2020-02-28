@@ -139,13 +139,12 @@ full_data <- full_data %>%
 
 ```{r bilateral remittance flows}
 
-# Is there a less redundant way to do this
-
 brf_2010 <- read_excel("data/BilateralRemittanceMatrix2010.xlsx", skip = 1) %>%
   clean_names()
 
 brf_2011 <- read_excel("data/BilateralRemittanceMatrix2011.xlsx", skip = 1) %>%
-  clean_names()
+  clean_names() %>%
+  inner_join(eumemberinfo, by = c("remittance_receiving_country_across_remittance_sending_country_down" = "Name"))
 
 brf_2012 <- read_excel("data/BilateralRemittanceMatrix2012.xlsx", skip = 1) %>%
   clean_names()
@@ -167,6 +166,21 @@ brf_2017 <- read_excel("data/bilateralremittancematrix2017.xlsx", skip = 1) %>%
 
 # Filter for only EU member states
 # Clean data so we don't have so many 0.0000000e's and have 0's instead
+# Current columns are remittance-receiving countries
+# IMPORTANT: How do I get the 2012 label to show up
+# Is there a less redundant way to do this
+# Finally is to flip the axis the other way, so I can see when
+# EU members are senders
+
+mytempdata <- inner_join(brf_2010, brf_2011, by = "remittance_receiving_country_across_remittance_sending_country_down", suffix = c("_2010", "_2011"))
+
+mytempdata <- inner_join(mytempdata, brf_2012, by = "remittance_receiving_country_across_remittance_sending_country_down", suffix = c("_2011", "_2012"))
+
+mytempdata = merge(mytempdata, mydata3)
+
+# full_data <- usd %>%
+#   inner_join(eumemberinfo, by = c("country_name" = "Name"))
+
 
 ```
 
