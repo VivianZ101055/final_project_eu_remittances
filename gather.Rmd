@@ -5,12 +5,6 @@ date: "2/27/2020"
 output: html_document
 ---
 
-About:
-
-
-
-Final Project Milestone #3 due Friday, February 28. Create a new Github repo. This is the first version of your final project. (There will be many more to come.) Write an Rmd which provides a draft of your About page. (Naming it about.Rmd is wise.) Knit that Rmd into an html and submit the html via Canvas. The Rmd should include the url to your repo, should we want to examine it. Discuss all your data sources in the Rmd. (If you are gathering Harvard data, you should have a draft of your survey questions.) With luck, you will have gathered all your data and placed it in the repo. (This will generally be done with a different Rmd, like gather.Rmd, in your repo which contains the code which actually downloads your data.) You should have processed your data. (It is OK if you have not gotten quite this far as long as you discuss your progress and your plan in the About page.) Remember: You must gather data from two or more different sources. Learning how to source, clean and combine data is one of the goals of the project. On almost any topic, there are useful tables of information on Wikipedia. See here and here for advice.
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
