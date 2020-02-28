@@ -14,6 +14,7 @@ library(rvest)
 library(magrittr)
 library(base)
 library(reshape2)
+library(plyr)
 library(tidyverse)
 
 ```
@@ -40,7 +41,7 @@ eumemberinfo$Name[eumemberinfo$Name == "Czechia"] <- "Czech Republic"
 eumemberinfo$Name[eumemberinfo$Name == "Slovakia"] <- "Slovak Republic"
 
 name <- eumemberinfo %>% 
-  select(Name) 
+  select(Name)
 
 names(name) <- c("sender")
 
@@ -64,7 +65,8 @@ usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
   select(-c(variable)) %>%
   drop_na()
 
-usd <- inner_join(name_country, usd, by = "country_name")
+usd <- inner_join(name_country, usd, by = c("country_name"))
+names(usd) <- c("country", "remittances_in_usd", "to_delete")
 
 percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
   select(-c("Indicator Name", "Indicator Code", "Country Code")) %>%
@@ -76,13 +78,14 @@ percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
   drop_na()
 
 percent_gdp <- inner_join(name_country, percent_gdp, by = "country_name")
+names(percent_gdp) <- c("country", "remittance_percent_of_gdp", "year")
 
 full_data <- usd %>%
-  inner_join(percent_gdp, by = c("Country Name" = "country_name"), suffix = c("_usd", "_gdp"))
+  inner_join(percent_gdp, by = "country")
 
-names(usd) <- c("country", "remittances_in_usd", "year")
+# remittances_in_usd data is iterating too many times
 
-names()
+
 # full_data <- usd %>%
 #   inner_join(eumemberinfo, by = c("country_name" = "Name"))
 
