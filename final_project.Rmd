@@ -18,13 +18,13 @@ library(plyr)
 
 ```
 
-```{r scraping data}
+```{r member states}
 
 eu_members <- read_html('https://en.wikipedia.org/wiki/Member_state_of_the_European_Union', skip = 0)
 
 eumemberinfo <- eu_members %>%
   html_nodes(xpath='//*[@id="mw-content-text"]/div/table[5]') %>%
-  html_table() 
+  html_table()
 
 eumemberinfo <- eumemberinfo[[1]]
 
@@ -43,18 +43,60 @@ eumemberinfo$Name[eumemberinfo$Name == "Slovakia"] <- "Slovak Republic"
 
 ```{r dataset, include=FALSE}
 
-# Load remittances in USD in a given country
+# Load remittances in USD in a given country, in alphabetical order
 
 usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
   clean_names() %>% 
   arrange(country_name)
 
-usd <- usd %>%
-  pivot_longer(
-    cols = starts_with("x"),
-    names_to = "year",
-    names_prefix = "yr"
-               )
+# Trying to get rid of the x in front of the data
+# Filter to only show between 1980 to present
+# Repeatedly getting the error that argument "pattern" is missing, with no
+# default
+# Convert USD to Euros - maybe later
+
+# usd <- usd %>%
+#   pivot_longer(
+#     cols = starts_with("x"),
+#     names_to = "year",
+#     names_prefix = "yr"
+#                )
+
+# usd$year <- gsub("^.{0,1}", "", usd$year)
+
+# usd$year <- as.numeric(usd$year)
+
+# usd <- usd %>%
+#   pivot_wider(
+#     id_cols = is.numeric(usd),
+#     names_to = "year",
+#     names_prefix = "yr"
+#                )
+
+# pivot_wider(data, id_cols = NULL, names_from = name,
+#   names_prefix = "", names_sep = "_", names_repair = "check_unique",
+#   values_from = value, values_fill = NULL, values_fn = NULL)
+
+# usd <- usd %>%
+#   select(colnames(usd), str_split("x"))
+
+# usd <- usd %>%
+#   pivot_longer(
+#     cols = starts_with("x"),
+#     names_to = "year",
+#     names_prefix = "yr"
+#                )
+
+# usd <- usd %>%
+#   pivot_longer(
+#     cols = starts_with("x"),
+#     names_to = "year",
+#     names_prefix = "yr"
+#                )
+# 
+# usd$year <- gsub("^.{0,1}", "", usd$year)
+# 
+# usd$year <- as.numeric(usd$year)
 
 # join this with the eumemberinfo to only look at member states
 
@@ -66,80 +108,32 @@ full_data <- usd %>%
 percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
   clean_names()
 
-percent_gdp <- percent_gdp %>%
-  pivot_longer(
-    cols = starts_with("x"),
-    names_to = "year",
-    names_prefix = "yr"
-               )
+# percent_gdp <- percent_gdp %>%
+#   pivot_longer(
+#     cols = starts_with("x"),
+#     names_to = "year",
+#     names_prefix = "yr"
+#                )
 
 # Join this with the previous data and select only the relevant columns
 
 full_data <- full_data %>%
-  inner_join(percent_gdp, by = "country_name", suffix = c(".usd", ".gdp")) %>%
-  select(country_name, country_code.gdp, starts_with("x"))
+  inner_join(percent_gdp, by = "country_name", suffix = c("_usd", "_gdp")) %>%
+  select(country_name, country_code_gdp, starts_with("x"))
 
-# %>%
-#   mutate(ifelse(starts_with("x")), gsub("^.{0,1}", ""))
+# full_data <- sub("^[^1|2]+\\.", "", full_data)
 
-# Take data only from 1980 onwards
+# full_data <- substr(paris$ratification, 0, 4)
 
-sub("\\S+\\s+", "")
+```
 
-sub("\\S+\\s+", "", tweetsdf$usertweet)
-tidying$year <- gsub("^.{0,1}", "", tidying$year)
-
-eumemberinfo$Name <- str_remove_all(eumemberinfo$Name, "\\[.*\\]")
-
-full_data
-
-# select the columns I want
-
-full_data <- full_data %>%
-  inner_join(percent_gdp, by = "country_name")
-
-eu_remittance_inflows <- eumemberinfo %>%
-  left_join(usd, by = c("Name" = "country_name"))
+```{r}
 
 remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
   clean_names()
 
-eu_remittance_inflows <- eumemberinfo %>%
-  left_join(remittance_inflows, by = c("Name" = "migrant_remittance_inflows_us_million"))
-
-# convert it to euros
-
-# eu_remittances <- eu_remittance_inflows %>%
-#   left_join(percent_gdp, by = c("Name" = "country_name"))
-# 
-# eu_percent_gdp <- eumemberinfo %>%
-#   semi_join(percent_gdp, by = c("Name" = "country_name"))
-
-usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
-  clean_names()
-
-eu_remittances_usd <- eumemberinfo %>%
-  left_join(usd, by = c("Name" = "country_name"))
-
-# loops
-
-usd <- usd %>%
-  pivot_longer(
-    cols = starts_with("x"),
-    names_to = "year",
-    names_prefix = "yr"
-               )
-
-usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
-  clean_names()
-
-full_world_data <- percent_gdp %>%
-  inner_join(usd, by = "country_name")
-
-full_world_data
-```
-
-```{r}
+full_data <- full_data %>%
+  inner_join(remittance_inflows, by = c("country_name" = "migrant_remittance_inflows_us_million"))
 
 ```
 
