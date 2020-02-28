@@ -127,13 +127,20 @@ full_data <- full_data %>%
 
 ```
 
-```{r}
+```{r remittance inflows}
 
 remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
   clean_names()
 
 full_data <- full_data %>%
   inner_join(remittance_inflows, by = c("country_name" = "migrant_remittance_inflows_us_million"))
+
+```
+
+```{r bilateral remittance flows}
+
+remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
+  clean_names()
 
 ```
 
