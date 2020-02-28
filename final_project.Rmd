@@ -43,6 +43,11 @@ name <- eumemberinfo %>%
   select(Name) 
 
 names(name) <- c("sender")
+
+name_country <- eumemberinfo %>% 
+  select(Name) 
+
+names(name_country) <- c("country_name")
   
 ```
 
@@ -50,10 +55,20 @@ names(name) <- c("sender")
 
 # Load remittances in USD in a given country, in alphabetical order
 
-usd <- read_excel("data/remittances_usd.xls", skip = 3)
+usd <- read_excel("data/remittances_usd.xls", skip = 3) %>% 
+  select(-c("Indicator Name", "Indicator Code", "Country Code")) %>% 
+  melt(id.vars = "Country Name") %>% 
+  mutate(year = as.numeric(variable) + 1959) %>% 
+  filter(year >= 1980) %>% 
+  clean_names() %>% 
+  select(-c(variable)) %>% 
+  drop_na() 
 
-%>%
-  arrange(country_name)
+usd <- inner_join(name_country, usd, by = "country_name")
+
+usd %>%
+  group_by(country_name) %>%
+  summarize(n())
 
 # Trying to get rid of the x in front of the data
 # Filter to only show between 1980 to present
@@ -266,4 +281,6 @@ mytempdata = merge(mytempdata, mydata3)
 ```{r rbind}
 all_bilateral_remittance <- rbind(brf_2010, brf_2011, brf_2012)
 ```
+
+
 
