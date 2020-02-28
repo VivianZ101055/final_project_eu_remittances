@@ -82,14 +82,29 @@ usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
   clean_names() %>% 
   arrange(country_name)
 
+# usd <- usd %>%
+#   pivot_longer(
+#     cols = starts_with("x"),
+#     names_to = "year",
+#     names_prefix = "yr"
+#                )
+
 full_data <- usd %>%
   inner_join(eumemberinfo, by = c("country_name" = "Name"))
 
 percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
   clean_names()
 
+# percent_gdp <- percent_gdp %>%
+#   pivot_longer(
+#     cols = starts_with("x"),
+#     names_to = "year",
+#     names_prefix = "yr"
+#                )
+
 full_data <- full_data %>%
-  full_join(percent_gdp, by = "country_name", suffix = c(".usd", ".gdp"))
+  inner_join(percent_gdp, by = "country_name", suffix = c(".usd", ".gdp")) %>%
+  select(country_name, country_code.gdp, starts_with("x"))
 
 # select the columns I want
 
