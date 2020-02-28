@@ -13,6 +13,8 @@ library(janitor)
 library(tidyverse)
 library(rvest)
 library(magrittr)
+library(base)
+library(plyr)
 
 ```
 
@@ -22,33 +24,88 @@ eu_members <- read_html('https://en.wikipedia.org/wiki/Member_state_of_the_Europ
 
 eumemberinfo <- eu_members %>%
   html_nodes(xpath='//*[@id="mw-content-text"]/div/table[5]') %>%
-  html_table()
+  html_table() 
 
 eumemberinfo <- eumemberinfo[[1]]
 
-# Keep editing here
+# Removing Wikipedia annotations
 
-  sapply(1:27(eumemberinfo), gsub("[...]", ""))
+eumemberinfo$Name <- str_remove_all(eumemberinfo$Name, "\\[.*\\]")
 
-eumemberinfo
+# Changing the names because Eastern European countries are labeled
+# differently on the two datasets
 
+eumemberinfo$Name[eumemberinfo$Name == "Czechia"] <- "Czech Republic"
 
-eumemberinfo <- eumember_info %>%
-  gsub("[...]", "")
+eumemberinfo$Name[eumemberinfo$Name == "Slovakia"] <- "Slovak Republic"
+
+# eumemberinfo <- (eumemberinfo, str_remove_all(eumemberinfo, "\\[.*\\]"))
+# 
+# eumemberinfo$Name <- str_remove_all(eumemberinfo$Name, "\\[.*\\]")
+# 
+# eumemberinfo <- eumemberinfo %>%
+#   gsub("[//]", "", eumemberinfo)
+# 
+# suffix("[*//]") <- ""
+# 
+# # How do I get rid of all the contents of the square brackets
+# 
+# eumemberinfo <- eumemberinfo %>%
+#   mutate(strsplit(eumemberinfo$Name, "[//]")) %>%
+#   mutate(ldply("[//]"))
+# 
+# # if string contains bracket, scxztrsplit at bracket
+# 
+# # One way I tried
+# remove_brackets <- function(data) {
+#   lapply(data, gsub("[//]", "", data))
+# }
+# 
+# eumemberinfo <- remove_brackets(eumemberinfo)
+# 
+# # Other way
+# 
+# eumemberinfo <- lapply(1:27(eumemberinfo), gsub("[//]", "", eumemberinfo))
+# 
+# # Other way
+# 
+# to_clean <- strsplit(eumemberinfo$Name, "[//]")
+# ldply(to_clean)
+# 
+# suffix
 
 ```
 
 ```{r dataset, include=FALSE}
 
-remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
-  clean_names()
+usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
+  clean_names() %>% 
+  arrange(country_name)
+
+full_data <- usd %>%
+  inner_join(eumemberinfo, by = c("country_name" = "Name"))
 
 percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
   clean_names()
 
+full_data <- full_data %>%
+  full_join(percent_gdp, by = "country_name", suffix = c(".usd", ".gdp"))
+
+# select the columns I want
+
+full_data <- full_data %>%
+  inner_join(percent_gdp, by = "country_name")
+
 eu_remittance_inflows <- eumemberinfo %>%
-  left_join(remittance_inflows, by = c("Name" = "migrant_remittance_inflows_us_million")) %>%
-  merge(percent_gdp, by = c("Name" = "country_name"))
+  left_join(usd, by = c("Name" = "country_name"))
+
+remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
+  clean_names()
+
+eu_remittance_inflows <- eumemberinfo %>%
+  left_join(remittance_inflows, by = c("Name" = "migrant_remittance_inflows_us_million"))
+
+# convert it to euros
 
 # eu_remittances <- eu_remittance_inflows %>%
 #   left_join(percent_gdp, by = c("Name" = "country_name"))
@@ -61,6 +118,8 @@ usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
 
 eu_remittances_usd <- eumemberinfo %>%
   left_join(usd, by = c("Name" = "country_name"))
+
+# loops
 
 usd <- usd %>%
   pivot_longer(
