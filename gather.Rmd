@@ -1,9 +1,15 @@
 ---
-title: "final_project"
+title: "Milestone 3"
 author: "Vivian Zhang"
 date: "2/27/2020"
 output: html_document
 ---
+
+About:
+
+
+
+Final Project Milestone #3 due Friday, February 28. Create a new Github repo. This is the first version of your final project. (There will be many more to come.) Write an Rmd which provides a draft of your About page. (Naming it about.Rmd is wise.) Knit that Rmd into an html and submit the html via Canvas. The Rmd should include the url to your repo, should we want to examine it. Discuss all your data sources in the Rmd. (If you are gathering Harvard data, you should have a draft of your survey questions.) With luck, you will have gathered all your data and placed it in the repo. (This will generally be done with a different Rmd, like gather.Rmd, in your repo which contains the code which actually downloads your data.) You should have processed your data. (It is OK if you have not gotten quite this far as long as you discuss your progress and your plan in the About page.) Remember: You must gather data from two or more different sources. Learning how to source, clean and combine data is one of the goals of the project. On almost any topic, there are useful tables of information on Wikipedia. See here and here for advice.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -19,7 +25,7 @@ library(tidyverse)
 
 ```
 
-```{r member states}
+```{r member states, include=FALSE}
 
 eu_members <- read_html('https://en.wikipedia.org/wiki/Member_state_of_the_European_Union', skip = 0)
 
@@ -52,9 +58,13 @@ names(name_country) <- c("country_name")
   
 ```
 
-```{r dataset, include=FALSE}
+```{r usd dataset, include=FALSE}
 
 # Load remittances in USD in a given country, in alphabetical order
+# Created an entry for each country in the EU, for each year, making note
+# of the amount of remittance flow in US dollars
+# This data comes from the World Bank Website:
+# https://www.worldbank.org/en/topic/migrationremittancesdiasporaissues/brief/migration-remittances-data
 
 usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
   select(-c("Indicator Name", "Indicator Code", "Country Code")) %>%
@@ -62,11 +72,21 @@ usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
   mutate(year = as.numeric(variable) + 1959) %>%
   filter(year >= 1980) %>%
   clean_names() %>%
-  select(-c(variable)) %>%
-  drop_na()
+  select(-c(variable))
 
 usd <- inner_join(name_country, usd, by = c("country_name"))
-names(usd) <- c("country", "remittances_in_usd", "to_delete")
+names(usd) <- c("country", "remittances_in_usd", "year")
+
+```
+
+
+```{r percent_gdp, include=FALSE}
+
+# Created an entry for each country in the EU, for each year, making
+# note of the amount of remittance flow relative to each
+# member state's GDP
+# This data comes from the World Bank Website:
+# https://www.worldbank.org/en/topic/migrationremittancesdiasporaissues/brief/migration-remittances-data
 
 percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
   select(-c("Indicator Name", "Indicator Code", "Country Code")) %>%
@@ -74,59 +94,40 @@ percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
   mutate(year = as.numeric(variable) + 1959) %>%
   filter(year >= 1980) %>%
   clean_names() %>%
-  select(-c(variable)) %>%
-  drop_na()
+  select(-c(variable))
 
 percent_gdp <- inner_join(name_country, percent_gdp, by = "country_name")
 names(percent_gdp) <- c("country", "remittance_percent_of_gdp", "year")
 
-full_data <- usd %>%
-  inner_join(percent_gdp, by = "country")
-
-# remittances_in_usd data is iterating too many times
-
-
 # full_data <- usd %>%
-#   inner_join(eumemberinfo, by = c("country_name" = "Name"))
-
-# Load remittances as percentage of GDP for a given country
-
-percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
-  clean_names()
-
-# percent_gdp <- percent_gdp %>%
-#   pivot_longer(
-#     cols = starts_with("x"),
-#     names_to = "year",
-#     names_prefix = "yr"
-#                )
-
-# Join this with the previous data and select only the relevant columns
-
-full_data <- full_data %>%
-  inner_join(percent_gdp, by = "country_name", suffix = c("_usd", "_gdp")) %>%
-  select(country_name, country_code_gdp, starts_with("x"))
-
-# full_data <- sub("^[^1|2]+\\.", "", full_data)
-
-# full_data <- substr(paris$ratification, 0, 4)
-
+#   inner_join(percent_gdp, by = c("country"))
 ```
 
-```{r remittance inflows}
+
+```{r remittance inflows, include=FALSE}
 
 remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
-  clean_names()
+  select(-c("Remittances as a share of GDP in 2019 (%)")) %>%
+  melt(id.vars = "Migrant remittance inflows (US$ million)") %>%
+  mutate(year = as.numeric(variable) + 1979) %>%
+  clean_names() %>%
+  select(-c(variable))
 
-full_data <- full_data %>%
-  inner_join(remittance_inflows, by = c("country_name" = "migrant_remittance_inflows_us_million"))
+remittance_inflows <- inner_join(name_country, remittance_inflows,
+                                 by = c("country_name" = "migrant_remittance_inflows_us_million"))
+
+names(remittance_inflows) <- c("country", "inflows in millions of usd", "year")
+  
+
+# full_data <- full_data %>%
+#   inner_join(remittance_inflows, by = c("country_name" = "migrant_remittance_inflows_us_million"))
 
 # <- data[ -c(19:22) ] %>%
 # na.omit()
 
 ```
 
-```{r bilateral remittance 2010}
+```{r bilateral remittance 2010, include=FALSE}
 
 brf_2010 <- read_excel("data/BilateralRemittanceMatrix2010.xlsx", skip = 1) %>% 
   melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
@@ -138,7 +139,7 @@ brf_2010 <- inner_join(name, brf_2010, by = "sender")
 
 ```
 
-```{r bilateral remittance 2011}
+```{r bilateral remittance 2011, include = FALSE}
 
 brf_2011 <- read_excel("data/BilateralRemittanceMatrix2011.xlsx", skip = 1) %>%
   melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
@@ -150,7 +151,7 @@ brf_2011 <- inner_join(name, brf_2011, by = "sender")
 
 ```
 
-```{r bilateral remittance 2012}
+```{r bilateral remittance 2012, include=FALSE}
 
 brf_2012 <- read_excel("data/BilateralRemittanceMatrix2012.xlsx", skip = 1) %>%
   melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
@@ -162,7 +163,7 @@ brf_2012 <- inner_join(name, brf_2012, by = "sender")
 
 ```
 
-```{r bilateral remittance 2013}
+```{r bilateral remittance 2013, include=FALSE}
 
 brf_2013 <- read_excel("data/BilateralRemittanceMatrix2013.xlsx", skip = 1) %>%
   melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
@@ -175,7 +176,7 @@ brf_2013 <- inner_join(name, brf_2013, by = "sender")
 ```
 
 
-```{r bilateral remittance 2014}
+```{r bilateral remittance 2014, include=FALSE}
 
 brf_2014 <- read_excel("data/BilateralRemittanceMatrix2014.xlsx", skip = 1) %>%
   melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
@@ -187,7 +188,7 @@ brf_2014 <- inner_join(name, brf_2014, by = "sender")
 
 ```
 
-```{r bilateral remittance 2015}
+```{r bilateral remittance 2015, include=FALSE}
 
 brf_2015 <- read_excel("data/BilateralRemittanceMatrix2014.xlsx", skip = 1) %>%
   melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
@@ -199,7 +200,7 @@ brf_2015 <- inner_join(name, brf_2015, by = "sender")
 
 ```
 
-```{r bilateral remittance 2016}
+```{r bilateral remittance 2016, include=FALSE}
 
 brf_2016 <- read_excel("data/bilateralremittancematrix2016.xlsx", skip = 1) %>%
   melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
@@ -211,7 +212,7 @@ brf_2016 <- inner_join(name, brf_2016, by = "sender")
 
 ```
 
-```{r bilateral remittance 2017}
+```{r bilateral remittance 2017, include=FALSE}
 
 brf_2017 <- read_excel("data/bilateralremittancematrix2017.xlsx", skip = 1) %>%
   melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
@@ -221,30 +222,12 @@ names(brf_2017) <- c("sender", "recipient", "amount", "year")
 
 brf_2017 <- inner_join(name, brf_2017, by = "sender")
 
-```
-
-# Filter for only EU member states
-# Clean data so we don't have so many 0.0000000e's and have 0's instead
-# Current columns are remittance-receiving countries
-# IMPORTANT: How do I get the 2012 label to show up
-# Is there a less redundant way to do this
-# Finally is to flip the axis the other way, so I can see when
-# EU members are senders
-
-mytempdata <- inner_join(brf_2010, brf_2011, by = "remittance_receiving_country_across_remittance_sending_country_down", suffix = c("_2010", "_2011"))
-
-mytempdata <- inner_join(mytempdata, brf_2012, by = "remittance_receiving_country_across_remittance_sending_country_down", suffix = c("_2011", "_2012"))
-
-mytempdata = merge(mytempdata, mydata3)
-
-# full_data <- usd %>%
-#   inner_join(eumemberinfo, by = c("country_name" = "Name"))
-
+brf_2017
 
 ```
 
-```{r rbind}
-all_bilateral_remittance <- rbind(brf_2010, brf_2011, brf_2012)
+```{r rbind, include=FALSE}
+all_bilateral_remittance <- rbind(brf_2010, brf_2011, brf_2012, brf_2013, brf_2014, brf_2015, brf_2016, brf_2017)
 ```
 
 
