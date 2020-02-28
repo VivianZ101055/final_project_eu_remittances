@@ -139,8 +139,34 @@ full_data <- full_data %>%
 
 ```{r bilateral remittance flows}
 
-remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
+# Is there a less redundant way to do this
+
+brf_2010 <- read_excel("data/BilateralRemittanceMatrix2010.xlsx", skip = 1) %>%
   clean_names()
+
+brf_2011 <- read_excel("data/BilateralRemittanceMatrix2011.xlsx", skip = 1) %>%
+  clean_names()
+
+brf_2012 <- read_excel("data/BilateralRemittanceMatrix2012.xlsx", skip = 1) %>%
+  clean_names()
+
+brf_2013 <- read_excel("data/BilateralRemittanceMatrix2013.xlsx", skip = 1) %>%
+  clean_names()
+
+brf_2014 <- read_excel("data/BilateralRemittanceMatrix2014.xlsx", skip = 1) %>%
+  clean_names()
+
+brf_2015 <- read_excel("data/bilateralremittancematrix2015.xlsx", skip = 1) %>%
+  clean_names()
+
+brf_2016 <- read_excel("data/bilateralremittancematrix2016.xlsx", skip = 1) %>%
+  clean_names()
+
+brf_2017 <- read_excel("data/bilateralremittancematrix2017.xlsx", skip = 1) %>%
+  clean_names()
+
+# Filter for only EU member states
+# Clean data so we don't have so many 0.0000000e's and have 0's instead
 
 ```
 
