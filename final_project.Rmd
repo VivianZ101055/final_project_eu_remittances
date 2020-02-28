@@ -66,7 +66,23 @@ usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
 
 usd <- inner_join(name_country, usd, by = "country_name")
 
+percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
+  select(-c("Indicator Name", "Indicator Code", "Country Code")) %>%
+  melt(id.vars = "Country Name") %>%
+  mutate(year = as.numeric(variable) + 1959) %>%
+  filter(year >= 1980) %>%
+  clean_names() %>%
+  select(-c(variable)) %>%
+  drop_na()
+
+percent_gdp <- inner_join(name_country, percent_gdp, by = "country_name")
+
+full_data <- usd %>%
+  inner_join(percent_gdp, by = c("Country Name" = "country_name"), suffix = c("_usd", "_gdp"))
+
 names(usd) <- c("country", "remittances_in_usd", "year")
+
+names()
 # full_data <- usd %>%
 #   inner_join(eumemberinfo, by = c("country_name" = "Name"))
 
