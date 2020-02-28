@@ -39,48 +39,48 @@ eumemberinfo$Name[eumemberinfo$Name == "Czechia"] <- "Czech Republic"
 
 eumemberinfo$Name[eumemberinfo$Name == "Slovakia"] <- "Slovak Republic"
 
-# eumemberinfo <- (eumemberinfo, str_remove_all(eumemberinfo, "\\[.*\\]"))
-# 
-# eumemberinfo$Name <- str_remove_all(eumemberinfo$Name, "\\[.*\\]")
-# 
-# eumemberinfo <- eumemberinfo %>%
-#   gsub("[//]", "", eumemberinfo)
-# 
-# suffix("[*//]") <- ""
-# 
-# # How do I get rid of all the contents of the square brackets
-# 
-# eumemberinfo <- eumemberinfo %>%
-#   mutate(strsplit(eumemberinfo$Name, "[//]")) %>%
-#   mutate(ldply("[//]"))
-# 
-# # if string contains bracket, scxztrsplit at bracket
-# 
-# # One way I tried
-# remove_brackets <- function(data) {
-#   lapply(data, gsub("[//]", "", data))
-# }
-# 
-# eumemberinfo <- remove_brackets(eumemberinfo)
-# 
-# # Other way
-# 
-# eumemberinfo <- lapply(1:27(eumemberinfo), gsub("[//]", "", eumemberinfo))
-# 
-# # Other way
-# 
-# to_clean <- strsplit(eumemberinfo$Name, "[//]")
-# ldply(to_clean)
-# 
-# suffix
-
 ```
 
 ```{r dataset, include=FALSE}
 
+# Load remittances in USD in a given country
+
 usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
   clean_names() %>% 
   arrange(country_name)
+
+# join this with the eumemberinfo to only look at member states
+
+full_data <- usd %>%
+  inner_join(eumemberinfo, by = c("country_name" = "Name"))
+
+# Load remittances as percentage of GDP for a given country
+
+percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
+  clean_names()
+
+# Join this with the previous data and select only the relevant columns
+
+full_data <- full_data %>%
+  inner_join(percent_gdp, by = "country_name", suffix = c(".usd", ".gdp")) %>%
+  select(country_name, country_code.gdp, starts_with("x"))
+
+# %>%
+#   mutate(ifelse(starts_with("x")), gsub("^.{0,1}", ""))
+
+# Take data only from 1980 onwards
+
+year_period <- full_data %>%
+  select(starts_with("x")) %>%
+  sub("\\S+\\s+", "")
+  gsub("x", "")
+
+sub("\\S+\\s+", "", tweetsdf$usertweet)
+tidying$year <- gsub("^.{0,1}", "", tidying$year)
+
+eumemberinfo$Name <- str_remove_all(eumemberinfo$Name, "\\[.*\\]")
+
+full_data
 
 # usd <- usd %>%
 #   pivot_longer(
@@ -89,22 +89,12 @@ usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
 #     names_prefix = "yr"
 #                )
 
-full_data <- usd %>%
-  inner_join(eumemberinfo, by = c("country_name" = "Name"))
-
-percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
-  clean_names()
-
 # percent_gdp <- percent_gdp %>%
 #   pivot_longer(
 #     cols = starts_with("x"),
 #     names_to = "year",
 #     names_prefix = "yr"
 #                )
-
-full_data <- full_data %>%
-  inner_join(percent_gdp, by = "country_name", suffix = c(".usd", ".gdp")) %>%
-  select(country_name, country_code.gdp, starts_with("x"))
 
 # select the columns I want
 
