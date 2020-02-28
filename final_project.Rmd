@@ -55,74 +55,20 @@ names(name_country) <- c("country_name")
 
 # Load remittances in USD in a given country, in alphabetical order
 
-usd <- read_excel("data/remittances_usd.xls", skip = 3) %>% 
-  select(-c("Indicator Name", "Indicator Code", "Country Code")) %>% 
-  melt(id.vars = "Country Name") %>% 
-  mutate(year = as.numeric(variable) + 1959) %>% 
-  filter(year >= 1980) %>% 
-  clean_names() %>% 
-  select(-c(variable)) %>% 
-  drop_na() 
+usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
+  select(-c("Indicator Name", "Indicator Code", "Country Code")) %>%
+  melt(id.vars = "Country Name") %>%
+  mutate(year = as.numeric(variable) + 1959) %>%
+  filter(year >= 1980) %>%
+  clean_names() %>%
+  select(-c(variable)) %>%
+  drop_na()
 
 usd <- inner_join(name_country, usd, by = "country_name")
 
-usd %>%
-  group_by(country_name) %>%
-  summarize(n())
-
-# Trying to get rid of the x in front of the data
-# Filter to only show between 1980 to present
-# Repeatedly getting the error that argument "pattern" is missing, with no
-# default
-# Convert USD to Euros - maybe later
-
-usd <- usd %>%
-  pivot_longer(
-    cols = starts_with("x"),
-    names_to = "year",
-    names_prefix = "yr"
-               )
-
-# usd$year <- gsub("^.{0,1}", "", usd$year)
-
-# usd$year <- as.numeric(usd$year)
-
-# usd <- usd %>%
-#   pivot_wider(
-#     id_cols = is.numeric(usd),
-#     names_to = "year",
-#     names_prefix = "yr"
-#                )
-
-# pivot_wider(data, id_cols = NULL, names_from = name,
-#   names_prefix = "", names_sep = "_", names_repair = "check_unique",
-#   values_from = value, values_fill = NULL, values_fn = NULL)
-
-# usd <- usd %>%
-#   select(colnames(usd), str_split("x"))
-
-# usd <- usd %>%
-#   pivot_longer(
-#     cols = starts_with("x"),
-#     names_to = "year",
-#     names_prefix = "yr"
-#                )
-
-# usd <- usd %>%
-#   pivot_longer(
-#     cols = starts_with("x"),
-#     names_to = "year",
-#     names_prefix = "yr"
-#                )
-# 
-# usd$year <- gsub("^.{0,1}", "", usd$year)
-# 
-# usd$year <- as.numeric(usd$year)
-
-# join this with the eumemberinfo to only look at member states
-
-full_data <- usd %>%
-  inner_join(eumemberinfo, by = c("country_name" = "Name"))
+names(usd) <- c("country", "remittances_in_usd", "year")
+# full_data <- usd %>%
+#   inner_join(eumemberinfo, by = c("country_name" = "Name"))
 
 # Load remittances as percentage of GDP for a given country
 
