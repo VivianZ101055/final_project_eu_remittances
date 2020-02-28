@@ -10,11 +10,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(readxl)
 library(janitor)
-library(tidyverse)
 library(rvest)
 library(magrittr)
 library(base)
-library(plyr)
+library(reshape2)
+library(tidyverse)
 
 ```
 
@@ -39,14 +39,20 @@ eumemberinfo$Name[eumemberinfo$Name == "Czechia"] <- "Czech Republic"
 
 eumemberinfo$Name[eumemberinfo$Name == "Slovakia"] <- "Slovak Republic"
 
+name <- eumemberinfo %>% 
+  select(Name) 
+
+names(name) <- c("sender")
+  
 ```
 
 ```{r dataset, include=FALSE}
 
 # Load remittances in USD in a given country, in alphabetical order
 
-usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
-  clean_names() %>% 
+usd <- read_excel("data/remittances_usd.xls", skip = 3)
+
+%>%
   arrange(country_name)
 
 # Trying to get rid of the x in front of the data
@@ -55,12 +61,12 @@ usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
 # default
 # Convert USD to Euros - maybe later
 
-# usd <- usd %>%
-#   pivot_longer(
-#     cols = starts_with("x"),
-#     names_to = "year",
-#     names_prefix = "yr"
-#                )
+usd <- usd %>%
+  pivot_longer(
+    cols = starts_with("x"),
+    names_to = "year",
+    names_prefix = "yr"
+               )
 
 # usd$year <- gsub("^.{0,1}", "", usd$year)
 
@@ -135,34 +141,107 @@ remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
 full_data <- full_data %>%
   inner_join(remittance_inflows, by = c("country_name" = "migrant_remittance_inflows_us_million"))
 
+# <- data[ -c(19:22) ] %>%
+# na.omit()
+
 ```
 
-```{r bilateral remittance flows}
+```{r bilateral remittance 2010}
 
-brf_2010 <- read_excel("data/BilateralRemittanceMatrix2010.xlsx", skip = 1) %>%
-  clean_names()
+brf_2010 <- read_excel("data/BilateralRemittanceMatrix2010.xlsx", skip = 1) %>% 
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2010)
+
+names(brf_2010) <- c("sender", "recipient", "amount", "year") 
+
+brf_2010 <- inner_join(name, brf_2010, by = "sender")
+
+```
+
+```{r bilateral remittance 2011}
 
 brf_2011 <- read_excel("data/BilateralRemittanceMatrix2011.xlsx", skip = 1) %>%
-  clean_names() %>%
-  inner_join(eumemberinfo, by = c("remittance_receiving_country_across_remittance_sending_country_down" = "Name"))
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2011)
+
+names(brf_2011) <- c("sender", "recipient", "amount", "year") 
+
+brf_2011 <- inner_join(name, brf_2011, by = "sender")
+
+```
+
+```{r bilateral remittance 2012}
 
 brf_2012 <- read_excel("data/BilateralRemittanceMatrix2012.xlsx", skip = 1) %>%
-  clean_names()
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2012)
+
+names(brf_2012) <- c("sender", "recipient", "amount", "year") 
+
+brf_2012 <- inner_join(name, brf_2012, by = "sender")
+
+```
+
+```{r bilateral remittance 2013}
 
 brf_2013 <- read_excel("data/BilateralRemittanceMatrix2013.xlsx", skip = 1) %>%
-  clean_names()
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2013)
+
+names(brf_2013) <- c("sender", "recipient", "amount", "year") 
+
+brf_2013 <- inner_join(name, brf_2013, by = "sender")
+
+```
+
+
+```{r bilateral remittance 2014}
 
 brf_2014 <- read_excel("data/BilateralRemittanceMatrix2014.xlsx", skip = 1) %>%
-  clean_names()
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2014)
 
-brf_2015 <- read_excel("data/bilateralremittancematrix2015.xlsx", skip = 1) %>%
-  clean_names()
+names(brf_2014) <- c("sender", "recipient", "amount", "year") 
+
+brf_2014 <- inner_join(name, brf_2014, by = "sender")
+
+```
+
+```{r bilateral remittance 2015}
+
+brf_2015 <- read_excel("data/BilateralRemittanceMatrix2014.xlsx", skip = 1) %>%
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2015)
+
+names(brf_2015) <- c("sender", "recipient", "amount", "year") 
+
+brf_2015 <- inner_join(name, brf_2015, by = "sender")
+
+```
+
+```{r bilateral remittance 2016}
 
 brf_2016 <- read_excel("data/bilateralremittancematrix2016.xlsx", skip = 1) %>%
-  clean_names()
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2016)
+
+names(brf_2016) <- c("sender", "recipient", "amount", "year") 
+
+brf_2016 <- inner_join(name, brf_2016, by = "sender")
+
+```
+
+```{r bilateral remittance 2017}
 
 brf_2017 <- read_excel("data/bilateralremittancematrix2017.xlsx", skip = 1) %>%
-  clean_names()
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2017)
+
+names(brf_2017) <- c("sender", "recipient", "amount", "year") 
+
+brf_2017 <- inner_join(name, brf_2017, by = "sender")
+
+```
 
 # Filter for only EU member states
 # Clean data so we don't have so many 0.0000000e's and have 0's instead
@@ -182,5 +261,9 @@ mytempdata = merge(mytempdata, mydata3)
 #   inner_join(eumemberinfo, by = c("country_name" = "Name"))
 
 
+```
+
+```{r rbind}
+all_bilateral_remittance <- rbind(brf_2010, brf_2011, brf_2012)
 ```
 
