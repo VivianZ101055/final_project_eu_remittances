@@ -49,6 +49,13 @@ usd <- read_excel("data/remittances_usd.xls", skip = 3) %>%
   clean_names() %>% 
   arrange(country_name)
 
+usd <- usd %>%
+  pivot_longer(
+    cols = starts_with("x"),
+    names_to = "year",
+    names_prefix = "yr"
+               )
+
 # join this with the eumemberinfo to only look at member states
 
 full_data <- usd %>%
@@ -58,6 +65,13 @@ full_data <- usd %>%
 
 percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
   clean_names()
+
+percent_gdp <- percent_gdp %>%
+  pivot_longer(
+    cols = starts_with("x"),
+    names_to = "year",
+    names_prefix = "yr"
+               )
 
 # Join this with the previous data and select only the relevant columns
 
@@ -70,10 +84,7 @@ full_data <- full_data %>%
 
 # Take data only from 1980 onwards
 
-year_period <- full_data %>%
-  select(starts_with("x")) %>%
-  sub("\\S+\\s+", "")
-  gsub("x", "")
+sub("\\S+\\s+", "")
 
 sub("\\S+\\s+", "", tweetsdf$usertweet)
 tidying$year <- gsub("^.{0,1}", "", tidying$year)
@@ -81,20 +92,6 @@ tidying$year <- gsub("^.{0,1}", "", tidying$year)
 eumemberinfo$Name <- str_remove_all(eumemberinfo$Name, "\\[.*\\]")
 
 full_data
-
-# usd <- usd %>%
-#   pivot_longer(
-#     cols = starts_with("x"),
-#     names_to = "year",
-#     names_prefix = "yr"
-#                )
-
-# percent_gdp <- percent_gdp %>%
-#   pivot_longer(
-#     cols = starts_with("x"),
-#     names_to = "year",
-#     names_prefix = "yr"
-#                )
 
 # select the columns I want
 
