@@ -1,0 +1,238 @@
+---
+title: "final_project"
+author: "Vivian Zhang"
+date: "2/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readxl)
+library(janitor)
+library(rvest)
+library(magrittr)
+library(base)
+library(reshape2)
+library(tidyverse)
+
+```
+
+```{r}
+
+# I went to a session at the ARC to ask about strategies
+# to approach the final project.
+# I learned that on top of seeing the final html files of past projects, I could
+# see how students implemented their code through a github link on each website.
+# After looking through half a dozen projects, I have a better idea for what I
+# want to do in terms of formatting. In particular, this map of Latin America
+# interests me. I want to display remittance inflows and outflows by having a
+# button on top of each country that allows the user to click and see how much
+# inflow or outflow there was.
+# https://igormorzan.shinyapps.io/Latin_American_Corruption/
+
+```
+
+```{r member states}
+
+eu_members <- read_html('https://en.wikipedia.org/wiki/Member_state_of_the_European_Union', skip = 0)
+
+eumemberinfo <- eu_members %>%
+  html_nodes(xpath='//*[@id="mw-content-text"]/div/table[5]') %>%
+  html_table()
+
+eumemberinfo <- eumemberinfo[[1]]
+
+# Removing Wikipedia annotations
+
+eumemberinfo$Name <- str_remove_all(eumemberinfo$Name, "\\[.*\\]")
+
+# Changing the names because Eastern European countries are labeled
+# differently on the two datasets
+
+eumemberinfo$Name[eumemberinfo$Name == "Czechia"] <- "Czech Republic"
+
+eumemberinfo$Name[eumemberinfo$Name == "Slovakia"] <- "Slovak Republic"
+
+name <- eumemberinfo %>% 
+  select(Name) 
+
+names(name) <- c("sender")
+  
+```
+
+```{r dataset, include=FALSE}
+
+# Load remittances in USD in a given country, in alphabetical order
+
+usd <- read_excel("data/remittances_usd.xls", skip = 3)
+
+# Trying to get rid of the x in front of the data
+# Filter to only show between 1980 to present
+# Repeatedly getting the error that argument "pattern" is missing, with no
+# default
+# Convert USD to Euros - maybe later
+
+usd <- usd %>%
+  pivot_longer(
+    cols = starts_with("x"),
+    names_to = "year",
+    names_prefix = "yr"
+               )
+
+# join this with the eumemberinfo to only look at member states
+
+full_data <- usd %>%
+  inner_join(eumemberinfo, by = c("country_name" = "Name"))
+
+# Load remittances as percentage of GDP for a given country
+
+percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
+  clean_names()
+
+# Join this with the previous data and select only the relevant columns
+
+full_data <- full_data %>%
+  inner_join(percent_gdp, by = "country_name", suffix = c("_usd", "_gdp")) %>%
+  select(country_name, country_code_gdp, starts_with("x"))
+
+# full_data <- sub("^[^1|2]+\\.", "", full_data)
+
+# full_data <- substr(paris$ratification, 0, 4)
+
+```
+
+```{r remittance inflows}
+
+remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
+  clean_names()
+
+full_data <- full_data %>%
+  inner_join(remittance_inflows, by = c("country_name" = "migrant_remittance_inflows_us_million"))
+
+# <- data[ -c(19:22) ] %>%
+# na.omit()
+
+```
+
+```{r bilateral remittance 2010}
+
+brf_2010 <- read_excel("data/BilateralRemittanceMatrix2010.xlsx", skip = 1) %>% 
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2010)
+
+names(brf_2010) <- c("sender", "recipient", "amount", "year") 
+
+brf_2010 <- inner_join(name, brf_2010, by = "sender")
+
+```
+
+```{r bilateral remittance 2011}
+
+brf_2011 <- read_excel("data/BilateralRemittanceMatrix2011.xlsx", skip = 1) %>%
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2011)
+
+names(brf_2011) <- c("sender", "recipient", "amount", "year") 
+
+brf_2011 <- inner_join(name, brf_2011, by = "sender")
+
+```
+
+```{r bilateral remittance 2012}
+
+brf_2012 <- read_excel("data/BilateralRemittanceMatrix2012.xlsx", skip = 1) %>%
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2012)
+
+names(brf_2012) <- c("sender", "recipient", "amount", "year") 
+
+brf_2012 <- inner_join(name, brf_2012, by = "sender")
+
+```
+
+```{r bilateral remittance 2013}
+
+brf_2013 <- read_excel("data/BilateralRemittanceMatrix2013.xlsx", skip = 1) %>%
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2013)
+
+names(brf_2013) <- c("sender", "recipient", "amount", "year") 
+
+brf_2013 <- inner_join(name, brf_2013, by = "sender")
+
+```
+
+
+```{r bilateral remittance 2014}
+
+brf_2014 <- read_excel("data/BilateralRemittanceMatrix2014.xlsx", skip = 1) %>%
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2014)
+
+names(brf_2014) <- c("sender", "recipient", "amount", "year") 
+
+brf_2014 <- inner_join(name, brf_2014, by = "sender")
+
+```
+
+```{r bilateral remittance 2015}
+
+brf_2015 <- read_excel("data/BilateralRemittanceMatrix2014.xlsx", skip = 1) %>%
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2015)
+
+names(brf_2015) <- c("sender", "recipient", "amount", "year") 
+
+brf_2015 <- inner_join(name, brf_2015, by = "sender")
+
+```
+
+```{r bilateral remittance 2016}
+
+brf_2016 <- read_excel("data/bilateralremittancematrix2016.xlsx", skip = 1) %>%
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2016)
+
+names(brf_2016) <- c("sender", "recipient", "amount", "year") 
+
+brf_2016 <- inner_join(name, brf_2016, by = "sender")
+
+```
+
+```{r bilateral remittance 2017}
+
+brf_2017 <- read_excel("data/bilateralremittancematrix2017.xlsx", skip = 1) %>%
+  melt(id.vars = "Remittance-receiving country (across)                                                              -                                                 Remittance-sending country (down)") %>%
+  mutate(year = 2017)
+
+names(brf_2017) <- c("sender", "recipient", "amount", "year") 
+
+brf_2017 <- inner_join(name, brf_2017, by = "sender")
+
+```
+
+```{r}
+
+# Filter for only EU member states
+# Clean data so we don't have so many 0.0000000e's and have 0's instead
+# Current columns are remittance-receiving countries
+# IMPORTANT: How do I get the 2012 label to show up
+# Is there a less redundant way to do this
+# Finally is to flip the axis the other way, so I can see when
+# EU members are senders
+
+mytempdata <- inner_join(brf_2010, brf_2011, by = "remittance_receiving_country_across_remittance_sending_country_down", suffix = c("_2010", "_2011"))
+
+mytempdata <- inner_join(mytempdata, brf_2012, by = "remittance_receiving_country_across_remittance_sending_country_down", suffix = c("_2011", "_2012"))
+
+mytempdata = merge(mytempdata, mydata3)
+
+```
+
+```{r rbind}
+
+all_bilateral_remittance <- rbind(brf_2010, brf_2011, brf_2012)
+
+```
+
