@@ -75,37 +75,50 @@ usd <- read_excel("data/remittances_usd.xls", skip = 3)
 
 usd <- usd %>%
   pivot_longer(
-    cols = starts_with("x"),
+    cols = `1980`:`2018`,
     names_to = "year",
     names_prefix = "yr"
                )
 
+usd <- usd[,-c(5:25)]
+
 # join this with the eumemberinfo to only look at member states
 
 full_data <- usd %>%
-  inner_join(eumemberinfo, by = c("country_name" = "Name"))
+  inner_join(eumemberinfo, by = c("Country Name" = "Name")) %>%
+  rename(remittances_in_usd = value) %>%
+  clean_names
 
 # Load remittances as percentage of GDP for a given country
 
-percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3) %>%
-  clean_names()
+percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3)
+
+percent_gdp <- percent_gdp %>%
+  pivot_longer(
+    cols = `1980`:`2018`,
+    names_to = "percent_year",
+    names_prefix = "yr") %>%
+  rename(remittances_percent_gdp = value) %>%
+  clean_names
+
+percent_gdp <- percent_gdp[,-c(5:25)]
 
 # Join this with the previous data and select only the relevant columns
 
 full_data <- full_data %>%
   inner_join(percent_gdp, by = "country_name", suffix = c("_usd", "_gdp")) %>%
-  select(country_name, country_code_gdp, starts_with("x"))
-
-# full_data <- sub("^[^1|2]+\\.", "", full_data)
-
-# full_data <- substr(paris$ratification, 0, 4)
+  select(country_name, country_code_usd, accession, year, remittances_in_usd, remittances_percent_gdp)
 
 ```
 
 ```{r remittance inflows}
 
 remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
-  clean_names()
+  pivot_longer(
+    cols = `1980`:`2018`,
+    names_to = "remittance_inflows",
+    names_prefix = "yr") %>%
+  clean_names
 
 full_data <- full_data %>%
   inner_join(remittance_inflows, by = c("country_name" = "migrant_remittance_inflows_us_million"))
