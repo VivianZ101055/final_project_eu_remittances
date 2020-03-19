@@ -35,7 +35,7 @@ library(tidyverse)
 
 ```{r member states}
 
-eu_members <- read_html('https://en.wikipedia.org/wiki/Member_state_of_the_European_Union', skip = 0)
+eumemberinfo <- read_html('https://en.wikipedia.org/wiki/Member_state_of_the_European_Union', skip = 0)
 
 eumemberinfo <- eu_members %>%
   html_nodes(xpath='//*[@id="mw-content-text"]/div/table[5]') %>%
