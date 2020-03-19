@@ -113,15 +113,19 @@ full_data <- full_data %>%
 
 ```{r remittance inflows}
 
-remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0) %>%
+remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0)
+
+remittance_inflows <- remittance_inflows %>%
   pivot_longer(
     cols = `1980`:`2018`,
     names_to = "remittance_inflows",
     names_prefix = "yr") %>%
-  clean_names
+  clean_names %>%
+  rename(remmitance_inflows=value, year_remittance=remittance_inflows, country_name = migrant_remittance_inflows_us_million) %>%
+  select(-c(x2019e, remittances_as_a_share_of_gdp_in_2019_percent))
 
 full_data <- full_data %>%
-  inner_join(remittance_inflows, by = c("country_name" = "migrant_remittance_inflows_us_million"))
+  inner_join(remittance_inflows, by = "country_name")
 
 # <- data[ -c(19:22) ] %>%
 # na.omit()
