@@ -14,6 +14,7 @@ library(rvest)
 library(magrittr)
 library(base)
 library(reshape2)
+library(shiny)
 # library(ggmap)
 # library(mapproj)
 # library(rworldmap)
@@ -274,17 +275,32 @@ all_bilateral_remittance <- rbind(brf_2010, brf_2011, brf_2012)
 # Using Leaflet, an open-source Javascript library
 # to create an interactive map
 
+qpal <- colorQuantile("Blues", full_data$remittances_in_usd)
+
+ui = fluidPage(
+  sliderInput(inputId = "year", "Year", 1980, 2018, value = 2010), leafletOutput(outputId = "map")
+)
+
+server = function(input, output) {
+  output$map = renderLeaflet({
+    leaflet() %>%
+      addPolygons(data = full_data[full_data$remittances_in_usd])
+  })
+}
+
+# shinyApp(ui, server)
+
 euromap <- leaflet() %>%
   addTiles() %>%
-  setView(25, 41.9, 3)
+  setView(30, 55, 3)
 
+addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1, color = ~qpal(full_data$remittances_in_usd)) %>%
 qpal <- colorQuantile("Blues", full_data$remittances_in_usd)
 
 euromap <- euromap %>%
   addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1, color = ~qpal(remittances_in_usd))
 
 euromap <- euromap + geom_sf(aes(fill = remittances_in_usd))
-
   geom_sf(aes(fill = remittances_in_usd)) +
   scale_fill_viridis_c(option = "plasma")
 
