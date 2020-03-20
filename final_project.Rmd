@@ -14,6 +14,7 @@ library(rvest)
 library(magrittr)
 library(base)
 library(reshape2)
+library(plotly)
 library(tidyverse)
 
 ```
@@ -37,7 +38,7 @@ library(tidyverse)
 
 eumemberinfo <- read_html('https://en.wikipedia.org/wiki/Member_state_of_the_European_Union', skip = 0)
 
-eumemberinfo <- eu_members %>%
+eumemberinfo <- eumemberinfo %>%
   html_nodes(xpath='//*[@id="mw-content-text"]/div/table[5]') %>%
   html_table()
 
@@ -87,7 +88,8 @@ usd <- usd[,-c(5:25)]
 full_data <- usd %>%
   inner_join(eumemberinfo, by = c("Country Name" = "Name")) %>%
   rename(remittances_in_usd = value) %>%
-  clean_names
+  clean_names %>%
+  filter(country_name %in% name$sender)
 
 # Load remittances as percentage of GDP for a given country
 
@@ -96,24 +98,30 @@ percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3)
 percent_gdp <- percent_gdp %>%
   pivot_longer(
     cols = `1980`:`2018`,
-    names_to = "percent_year",
+    names_to = "year",
     names_prefix = "yr") %>%
   rename(remittances_percent_gdp = value) %>%
-  clean_names
+  clean_names %>%
+  filter(country_name %in% name$sender)
 
 percent_gdp <- percent_gdp[,-c(5:25)]
 
 # Join this with the previous data and select only the relevant columns
 
 full_data <- full_data %>%
-  inner_join(percent_gdp, by = "country_name", suffix = c("_usd", "_gdp")) %>%
+  inner_join(percent_gdp, by = c("country_name"="country_name", "year"="year"), suffix = c("_usd", "_gdp")) %>%
   select(country_name, country_code_usd, accession, year, remittances_in_usd, remittances_percent_gdp)
 
 ```
 
 ```{r remittance inflows}
 
+# Load remittance inflows
+
 remittance_inflows <- read_excel("data/remittance_inflows.xlsx", skip = 0)
+
+# Pivot years into column, clean names, rename columns
+# Filter for EU countries, remove columns
 
 remittance_inflows <- remittance_inflows %>%
   pivot_longer(
@@ -121,11 +129,14 @@ remittance_inflows <- remittance_inflows %>%
     names_to = "remittance_inflows",
     names_prefix = "yr") %>%
   clean_names %>%
-  rename(remmitance_inflows=value, year_remittance=remittance_inflows, country_name = migrant_remittance_inflows_us_million) %>%
+  rename(remmitance_inflows=value, year=remittance_inflows, country_name = migrant_remittance_inflows_us_million) %>%
+  filter(country_name %in% name$sender) %>%
   select(-c(x2019e, remittances_as_a_share_of_gdp_in_2019_percent))
 
+# Join into full dataset
+
 full_data <- full_data %>%
-  inner_join(remittance_inflows, by = "country_name")
+  inner_join(remittance_inflows, by = c("country_name"="country_name", "year"="year"))
 
 # <- data[ -c(19:22) ] %>%
 # na.omit()
@@ -230,7 +241,6 @@ brf_2017 <- inner_join(name, brf_2017, by = "sender")
 ```
 
 ```{r}
-
 # Filter for only EU member states
 # Clean data so we don't have so many 0.0000000e's and have 0's instead
 # Current columns are remittance-receiving countries
@@ -239,9 +249,9 @@ brf_2017 <- inner_join(name, brf_2017, by = "sender")
 # Finally is to flip the axis the other way, so I can see when
 # EU members are senders
 
-mytempdata <- inner_join(brf_2010, brf_2011, by = "remittance_receiving_country_across_remittance_sending_country_down", suffix = c("_2010", "_2011"))
+mytempdata <- inner_join(brf_2010, brf_2011, by = "sender", suffix = c("_2010", "_2011"))
 
-mytempdata <- inner_join(mytempdata, brf_2012, by = "remittance_receiving_country_across_remittance_sending_country_down", suffix = c("_2011", "_2012"))
+mytempdata <- inner_join(mytempdata, brf_2012, by = "sender", suffix = c("_2011", "_2012"))
 
 mytempdata = merge(mytempdata, mydata3)
 
@@ -250,6 +260,17 @@ mytempdata = merge(mytempdata, mydata3)
 ```{r rbind}
 
 all_bilateral_remittance <- rbind(brf_2010, brf_2011, brf_2012)
+
+```
+
+```{r map plot}
+
+# All data loaded. Next, map showing the remittances in USD.
+
+plot_geo(data=full_data, locationmode = "country_name") %>%
+  add_trace(z= ~remittances_in_usd, locations = ~country_name, color= ~remittances_in_usd, colorbar=list(tick0 = 0, tickmode = "log", dtick=1000000))
+
+full_data
 
 ```
 
