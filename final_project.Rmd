@@ -14,10 +14,11 @@ library(rvest)
 library(magrittr)
 library(base)
 library(reshape2)
-library(ggmap)
-library(mapproj)
-library(rworldmap)
-library(rworldxtra)
+# library(ggmap)
+# library(mapproj)
+# library(rworldmap)
+# library(rworldxtra)
+library(leaflet)
 library(tidyverse)
 
 ```
@@ -268,18 +269,21 @@ all_bilateral_remittance <- rbind(brf_2010, brf_2011, brf_2012)
 
 ```{r map plot}
 
-# All data loaded. Next, map showing the remittances in USD.
+# # All data loaded. Next, map showing the remittances in USD.
 
-ggmap::register_google(key = "********")
+# Using Leaflet, an open-source Javascript library
+# to create an interactive map
 
-ggmap(get_googlemap(center = c(lon = 53, lat = -9), zoom = 4))
+euromap <- leaflet() %>%
+  addTiles() %>%
+  setView(25, 41.9, 3)
 
-newmap <- getMap(resolution = "high")
+qpal <- colorQuantile("Blues", full_data$remittances_in_usd)
 
-map <- plot(newmap,
-            xlim = c(-20, 59),
-            ylim = c(35, 71))
+euromap <- euromap %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1, color = ~qpal(remittances_in_usd))
 
+euromap <- euromap + geom_sf(aes(fill = remittances_in_usd))
 
   geom_sf(aes(fill = remittances_in_usd)) +
   scale_fill_viridis_c(option = "plasma")
