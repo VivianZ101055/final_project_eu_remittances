@@ -14,7 +14,10 @@ library(rvest)
 library(magrittr)
 library(base)
 library(reshape2)
-library(plotly)
+library(ggmap)
+library(mapproj)
+library(rworldmap)
+library(rworldxtra)
 library(tidyverse)
 
 ```
@@ -267,7 +270,22 @@ all_bilateral_remittance <- rbind(brf_2010, brf_2011, brf_2012)
 
 # All data loaded. Next, map showing the remittances in USD.
 
-plot_geo(data=full_data, locationmode = "country_name") %>%
+ggmap::register_google(key = "********")
+
+ggmap(get_googlemap(center = c(lon = 53, lat = -9), zoom = 4))
+
+newmap <- getMap(resolution = "high")
+
+map <- plot(newmap,
+            xlim = c(-20, 59),
+            ylim = c(35, 71))
+
+
+  geom_sf(aes(fill = remittances_in_usd)) +
+  scale_fill_viridis_c(option = "plasma")
+
+
+locationmode = "country_name") %>%
   add_trace(z= ~remittances_in_usd, locations = ~country_name, color= ~remittances_in_usd, colorbar=list(tick0 = 0, tickmode = "log", dtick=1000000))
 
 full_data
