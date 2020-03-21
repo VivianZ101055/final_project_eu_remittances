@@ -258,8 +258,6 @@ mytempdata <- inner_join(brf_2010, brf_2011, by = "sender", suffix = c("_2010", 
 
 mytempdata <- inner_join(mytempdata, brf_2012, by = "sender", suffix = c("_2011", "_2012"))
 
-mytempdata = merge(mytempdata, mydata3)
-
 ```
 
 ```{r rbind}
@@ -275,30 +273,19 @@ all_bilateral_remittance <- rbind(brf_2010, brf_2011, brf_2012)
 # Using Leaflet, an open-source Javascript library
 # to create an interactive map
 
-ggplot(california, aes(fill = estimate)) +
-  geom_sf() +
-  labs(title = "Median Income by County in California",
-       caption = "Source: American Communities Survey 2018",
-       fill = "Median Income") +
-  scale_fill_viridis_c(option = "plasma",
-                       direction = -1, labels = comma) +
-  theme_void()
-
-qpal <- colorNumeric(palette = "Blues", domain = full_data$remittances_in_usd)
-
-ui <- bootstrapPage(
-  tags$style(type = "text/css", "html, body {width:100%;height:100%}"),
-  leafletOutput("map", width = "100%", height = "100%"),
-  absolutePanel(top = 10, right = 10)
-)
+# Creating shiny slider going from 1980-2018
 
 ui = fluidPage(
   sliderInput(inputId = "year", "Year", 1980, 2018, value = 2010), leafletOutput(outputId = "map")
 )
 
-sample_data <- full_data %>%
-  pull(remittances_in_usd) %>%
-  filter(year == "2018")
+# sample_data <- full_data %>%
+#   pull(remittances_in_usd) %>%
+#   filter(year == "2018")
+
+# Creating a function with our maps
+# inputs and outputs
+# Put into the shinyApp function
 
 server = function(input, output) {
   output$map = renderLeaflet({
@@ -311,28 +298,19 @@ server = function(input, output) {
 
 shinyApp(ui, server)
 
+# Color palette defined
+
 qpal <- colorNumeric(palette = "Blues", domain = full_data$remittances_in_usd)
 
-euromap <- leaflet() %>%
-  addTiles() %>%
-  setView(30, 55, 3) %>%
-  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1, color = ~qpal(remittances_in_usd))
+# Generating the map of Europe with colors
 
-addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1, color = ~qpal(full_data$remittances_in_usd)) %>%
-qpal <- colorQuantile("Blues", full_data$remittances_in_usd)
+# euromap <- leaflet() %>%
+#   addTiles() %>%
+#   setView(30, 55, 3) %>%
+#   addPolygons(data = full_data, stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1, color = ~qpal(remittances_in_usd))
 
-euromap <- euromap %>%
-  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1, color = ~qpal(remittances_in_usd))
-
-euromap <- euromap + geom_sf(aes(fill = remittances_in_usd))
-  geom_sf(aes(fill = remittances_in_usd)) +
-  scale_fill_viridis_c(option = "plasma")
-
-
-locationmode = "country_name") %>%
-  add_trace(z= ~remittances_in_usd, locations = ~country_name, color= ~remittances_in_usd, colorbar=list(tick0 = 0, tickmode = "log", dtick=1000000))
-
-full_data
+# addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1, color = ~qpal(full_data$remittances_in_usd)) %>%
+# qpal <- colorQuantile("Blues", full_data$remittances_in_usd)
 
 ```
 
