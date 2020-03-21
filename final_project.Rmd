@@ -25,20 +25,10 @@ library(tidyverse)
 
 ```
 
-```{r}
+# Comments for Milestone 5
 
-# I went to a session at the ARC to ask about strategies
-# to approach the final project.
-# I learned that on top of seeing the final html files of past projects, I could
-# see how students implemented their code through a github link on each website.
-# After looking through half a dozen projects, I have a better idea for what I
-# want to do in terms of formatting. In particular, this map of Latin America
-# interests me. I want to display remittance inflows and outflows by having a
-# button on top of each country that allows the user to click and see how much
-# inflow or outflow there was.
-# https://igormorzan.shinyapps.io/Latin_American_Corruption/
+I worked quite a bit on my graphs this week. First, I cleaned my data because I noticed that after a few inner_join runs, some values (such as remittances in usd) remained static from 1980-2018. This was because I also needed to join columns by year, not just country name. I created a new column in my full_data dataframe that looks at the sum of remittances (in usd) in all EU member states in any given year from 1980 to 2018. Initially, the y axis showed what looked like scientific notation because the numbers were quite large and unwieldy. I play with scale_y_continuous to make it clearer. I decided to add both geom_line and geom_plot, so as to allow the user to hover over specific discrete points as well as see the overall trend of the data. In order to allow the hover feature to work, I learned more about the shiny toolkit. I spent some time experimenting with maps. At first, I tried a Google Maps API key, but after looking through more past projects, I decided to use leaflet. I figured out how to zoom into Europe specifically. Then, I experimented with the Shiny slider that allowed the user to select the year. I am currently working on addPolygons and trying to figure out which data input I need to create a choropleth map for remittances in usd. I will need to read more about spatial data in order to do so - somehow, I will need to communicate the country names as coordinates, so that I can match countries on the map with the country names I have in my full_data dataset. I already noticed that the countries are named differently between the leaflet map and my dataset. I am happy with the progress I have made so far; I spent quite a bit of time reading about leaflet and how to map my data, so hopefully the mapping won't be too difficult.
 
-```
 
 ```{r member states}
 
@@ -151,6 +141,10 @@ full_data <- full_data %>%
 
 ```{r plot}
 
+# Get my data from full_data
+# Add a new column called sum_remittance_usd
+# ungroup and cast year into a numeric
+
 mydata <- full_data %>%
   na.omit %>%
   group_by(year) %>%
@@ -158,14 +152,19 @@ mydata <- full_data %>%
   ungroup() %>%
   mutate(year = as.numeric(as.character(year)))
 
+# to enable shiny toolkit, use fluidPage
+
 ui <- fluidPage(
   plotlyOutput("distPlot")
 )
+
+# defining server for shinyApp function
 
 server <- function(input, output) {
   output$distPlot <- renderPlotly({
     ggplot(mydata, aes(x = year, y = sum_remittance_usd)) +
       geom_line() +
+      add_trace(hovertemplate = "Year: %{x}", "Total Remittances: %{y}") +
       geom_point() +
       labs(title = "Total remittances flowing into the EU, by year",
            # subtitle = "Plotting Remittances in USD, from 1980-2018",
@@ -191,9 +190,6 @@ server <- function(input, output) {
 }
 
 shinyApp(ui = ui, server = server)
-
-# Ability to hover over points
-# Change out of scientific notation
 
 ```
 
