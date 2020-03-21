@@ -168,8 +168,8 @@ server <- function(input, output) {
       geom_line() +
       geom_point() +
       labs(title = "Total remittances flowing into the EU, by year",
-           subtitle = "Plotting Remittances in USD, from 1980-2018",
-           caption = "Source: World Bank",
+           # subtitle = "Plotting Remittances in USD, from 1980-2018",
+           # caption = "Source: World Bank",
            x = "Year",
            y = "Total Remittances (in Billions of USD)") +
       scale_x_continuous(limits = c(1980, 2018),
@@ -325,38 +325,40 @@ all_bilateral_remittance <- rbind(brf_2010, brf_2011, brf_2012)
 
 # Creating shiny slider going from 1980-2018
 
-ui = fluidPage(
-  sliderInput(inputId = "year", "Year", 1980, 2018, value = 2010), leafletOutput(outputId = "map")
-)
-
-# sample_data <- full_data %>%
-#   pull(remittances_in_usd) %>%
-#   filter(year == "2018")
+# ui = fluidPage(
+#   sliderInput(inputId = "year", "Year", 1980, 2018, value = 2010), leafletOutput(outputId = "map")
+# )
 
 # Creating a function with our maps
 # inputs and outputs
 # Put into the shinyApp function
 
-server = function(input, output) {
-  output$map = renderLeaflet({
-    leaflet() %>%
-      addPolygons(data = full_data, fillcolor = ~qpal(full_data$remittances_in_usd)) %>%
-      addTiles() %>%
-      setView(30,55,3)
-  })
-}
+# This is the shinyApp setup (including the server function) that I will
+# be working with
 
-shinyApp(ui, server)
+# server = function(input, output) {
+#   output$map = renderLeaflet({
+#     leaflet() %>%
+#       addPolygons(data = full_data, fillcolor = ~qpal(full_data$remittances_in_usd)) %>%
+#       addTiles() %>%
+#       setView(30,55,3)
+#   })
+# }
+
+# shinyApp(ui, server)
 
 # Color palette defined
 
-qpal <- colorNumeric(palette = "Blues", domain = full_data$remittances_in_usd)
+# qpal <- colorNumeric(palette = "Blues", domain = full_data$remittances_in_usd)
 
 # Generating the map of Europe with colors
 
-# euromap <- leaflet() %>%
-#   addTiles() %>%
-#   setView(30, 55, 3) %>%
+euromap <- leaflet() %>%
+  addTiles() %>%
+  setView(30, 55, 3)
+
+euromap
+
 #   addPolygons(data = full_data, stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1, color = ~qpal(remittances_in_usd))
 
 # addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1, color = ~qpal(full_data$remittances_in_usd)) %>%
