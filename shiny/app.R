@@ -22,7 +22,7 @@ server <- function(input, output) {
             scale_x_continuous(limits = c(1980, 2018),
                                breaks = c(1980, 1985, 1990, 1995, 2000, 2005, 2010,
                                           2015),
-                               labels = c("1980", "1985", "1990", "1995", 
+                               labels = c("1980", "1985", "1990", "1995",
                                           "2000", "2005", "2010",
                                           "2015")) +
             scale_y_continuous(limits = c(0, 120000000000),
