@@ -166,8 +166,8 @@ server <- function(input, output) {
       geom_line() +
       geom_point() +
       labs(title = "Total remittances flowing into the EU, by year",
-           # subtitle = "Plotting Remittances in USD, from 1980-2018",
-           # caption = "Source: World Bank",
+           subtitle = "Plotting Remittances in USD, from 1980-2018",
+           caption = "Source: World Bank",
            x = "Year",
            y = "Total Remittances (in Billions of USD)") +
       scale_x_continuous(limits = c(1980, 2018),
@@ -188,6 +188,6 @@ server <- function(input, output) {
   })
 }
 
-shinyApp(ui = ui, server = server)
+shinyApp(ui, server)
 
 ```
