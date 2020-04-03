@@ -4,3 +4,6 @@
 .Ruserdata
 
 final_project.Rproj
+.DS_Store
+shiny/.DS_Store
+shiny/shiny_files/.DS_Store
