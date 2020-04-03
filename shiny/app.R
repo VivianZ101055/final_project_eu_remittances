@@ -16,11 +16,38 @@ ui <- fluidPage(
                                   height = "100%"),
                       h1(tags$b("EU Remittance Flows"), align = "center"),
                       p(tags$em("Models of Remittance Inflows and Outflows over the last 40 years"),
-                        align = "center")
+                        align = "center"),
+                      p("Welcome! This webpage looks at remittance flows in the EU from the 1980s to present.",
+                        align = "center"),
+                      h2(tags$b("Contact")),
+                      p("Hi! I am Vivian Zhang, a first year at Harvard College studying Economics with a secondary in Government!"),
+                      p("You can reach me at vivianzhang@college.harvard.edu."),
+                      p("The code for this project can be accessed from",
+                        a(href="https://github.com/VivianZ101055", "my github repository.")),
+                      br(),
+                      hr("Acknowledgements:"),
+                      p("Thank you to Preceptor David Kane and all the members of GOV 1005 for introducing me to data science and helping me on this project!")
              ),
              
              tabPanel("Graphs",
-                      plotlyOutput("distPlot")),
+                      sidebarLayout(
+                        sidebarPanel(
+                          h3("Interactive Graphs")
+                        ),
+                        mainPanel(
+                          tabsetPanel(
+                            tabPanel("Remittances in USD",
+                                     plotlyOutput("distPlot"))
+                            ),
+                          tabsetPanel(
+                            tabPanel("Remittances as a Percentage of GDP")
+                          ),
+                          tabsetPanel(
+                            tabPanel("Case Study: UK")
+                          )
+                          )
+                        )
+                      ),
   
   navbarMenu("Remittance Maps",
              tabPanel("Inflows"),
