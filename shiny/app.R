@@ -60,7 +60,10 @@ ui <- fluidPage(
                       ),
   
   navbarMenu("Remittance Maps",
-             tabPanel("Inflows"),
+             tabPanel("Inflows",
+                      leaflet() %>%
+                        addTiles() %>%
+                        setView(30, 55, 3)),
              tabPanel("Outflows"))
   ))
 
