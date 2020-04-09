@@ -9,15 +9,30 @@ library(magrittr)
 library(base)
 library(reshape2)
 library(leaflet)
+library(sp)
+library(maptools)
 library(maps)
+
 library(tidyverse)
 
-source("data.R")
+wrld_simpl %>%
+  leaflet() %>%
+  addTiles() %>%
+  addPolygons(weight = 1,
+              color = "blue",
+              label = ~paste0("Country: ", full_data$country_name, "\n",
+                              "Total Remittances: ", full_data$remittances_in_usd),
+              highlight = highlightOptions(weight = 3, color = "red", bringToFront = TRUE)) %>%
+  colorNumeric(palette = "Blues",
+               domain = log(full_data$remittances_in_usd))
 
-map_data_remittances <- full_data %>%
-  select(country_name, remittances_in_usd)
+load(url("http://spatial.nhh.no/R/etc/TM_WORLD_BORDERS_SIMPL-0.2.RData"))
+
+# source("data.R")
 
 data(world.cities)
+
+data(wrld_simpl)
 
 world.cities$country.etc[world.cities$country.etc == "Czechia"] <- "Czech Republic"
 
@@ -29,6 +44,16 @@ eu_capitals <- world.cities %>%
   inner_join(eumemberinfo, by = c("country" = "Name")) %>%
   select(country, long, lat) %>%
   filter(long != 33.38)
+
+eumemberinfo$Name[eumemberinfo$Name == "Slovak Republic"] <- "Slovakia"
+
+eunames <- eumemberinfo %>%
+  pull(Name)
+
+wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames),]
+
+australia.map < - world.map[world.map$NAME == "Australia",]
+plot(australia.map)
 
 #-----------------------------------------------------------------
 #--------------------------Shiny ui-------------------------------
@@ -78,16 +103,25 @@ ui <- fluidPage(
   
   navbarMenu("Remittance Maps",
              tabPanel("Inflows",
-                      leaflet(options = leafletOptions(dragging = TRUE,
+                      leaflet(map_remittances, options = leafletOptions(dragging = TRUE,
                                                        minZoom = 3,
                                                        maxZoom = 6)) %>%
                         addProviderTiles("CartoDB") %>%
                         setView(30, 55, 3) %>%
-                        addMarkers(lng = map_data_remittances$lon,
-                                   lat = map_data_remittances$lat,
-                                   popup = map_data_remittances$hq) %>%
-                        setMaxBounds(lng1 = 0, lat1 = 35,
-                                  lng2 = 30, lat2 = 70)),
+                        addCircleMarkers(lng = eu_capitals$long,
+                                   lat = eu_capitals$lat,
+                                   label = eu_capitals$country,
+                                   radius = 5,
+                                   color = "blue") %>%
+                        addPolygons(weight = 1,
+                                    color = "blue",
+                                    label = ~paste0("Country: ", full_data$country_name, "\n",
+                                                    "Total Remittances: ", full_data$remittances_in_usd),
+                                    highlight = highlightOptions(weight = 3, color = "red", bringToFront = TRUE)) %>%
+                        colorNumeric(palette = "Blues",
+                                     domain = log(full_data$remittances_in_usd)) %>%
+                        setMaxBounds(lng1 = 15, lat1 = 35,
+                                  lng2 = 20, lat2 = 70)),
              tabPanel("Outflows",
                       leaflet() %>%
                         addTiles() %>%
