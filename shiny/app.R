@@ -15,13 +15,19 @@ library(maps)
 
 library(tidyverse)
 
+# Things to fix: change the labels and numbers for hovering results to be
+# correct. Figure out how to load data properly on the data.R file and how to
+# organize data for submission. Figure out how to get the chloropeth plot and
+# what exactly to pipe in to have the wrld_simpl_data plot to show up on the
+# shinyapp.
+
 wrld_simpl_data %>%
   leaflet() %>%
   addTiles() %>%
   addPolygons(weight = 1,
               color = "blue",
-              label = ~paste0("Country: ", full_data$country_name, "\n",
-                              "Total Remittances: ", full_data$remittances_in_usd),
+              label = ~paste0("Country: ", full_data$country_name, ",\n",
+                              "Total Remittances: ", full_data$remittances_in_usd, sep=""),
               highlight = highlightOptions(weight = 3, color = "red", bringToFront = TRUE)) %>%
   colorNumeric(palette = "Blues",
                domain = log(full_data$remittances_in_usd))
@@ -54,7 +60,8 @@ eunames <- eumemberinfo %>%
 
 # Considers only the polygons for the EU countries.
 
-wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames),]
+wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames),] %>%
+  mutate(remittance_usd_stat = full_data$remittances_in_usd)
 
 # australia.map < - world.map[world.map$NAME == "Australia",]
 # plot(australia.map)
