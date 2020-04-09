@@ -1,4 +1,4 @@
-
+library(readxl)
 library(tidyverse)
 
 #---------------------------------------------------------------------
@@ -35,7 +35,7 @@ names(name) <- c("sender")
 
 # Load remittances in USD in a given country, in alphabetical order
 
-usd <- read_excel("shiny/data/remittances_usd.xls", skip = 3)
+usd <- read_excel("data/remittances_usd.xls", skip = 3)
 
 # Trying to get rid of the x in front of the data
 # Filter to only show between 1980 to present
