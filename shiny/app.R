@@ -26,13 +26,20 @@ wrld_simpl_data %>%
   addTiles() %>%
   addPolygons(weight = 1,
               color = "blue",
-              label = ~paste0("Country: ", full_data$country_name, ",\n",
+              label = ~paste0("Country: ", wrld_simpl_data@data$NAME, ",\n",
                               "Total Remittances: ", full_data$remittances_in_usd, sep=""),
               highlight = highlightOptions(weight = 3, color = "red", bringToFront = TRUE)) %>%
   colorNumeric(palette = "Blues",
-               domain = log(full_data$remittances_in_usd))
+               domain = log(wrld_simpl_data@data$remmitance_inflows))
 
 load(url("http://spatial.nhh.no/R/etc/TM_WORLD_BORDERS_SIMPL-0.2.RData"))
+
+full_data$country_name <- gsub('Slovak Republic', 'Slovakia', full_data$country_name)
+test <- wrld_simpl_data@data$NAME
+test2 <- full_data[full_data$country_name %in% test & full_data$year == 2000, ]
+colnames(test2)[1] <- 'NAME'
+test3 <- merge.data.frame(wrld_simpl_data@data, test2, 'NAME')
+wrld_simpl_data@data <- test3
 
 # source("data.R")
 
@@ -60,8 +67,7 @@ eunames <- eumemberinfo %>%
 
 # Considers only the polygons for the EU countries.
 
-wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames),] %>%
-  mutate(remittance_usd_stat = full_data$remittances_in_usd)
+wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames),]
 
 # australia.map < - world.map[world.map$NAME == "Australia",]
 # plot(australia.map)

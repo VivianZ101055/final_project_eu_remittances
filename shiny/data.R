@@ -72,7 +72,7 @@ full_data <- usd %>%
 
 # Load remittances as percentage of GDP for a given country
 
-#percent_gdp <- read_excel("shiny/data/remittance_percentgdp.xls", skip = 3)
+percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3)
 
 percent_gdp <- percent_gdp %>%
   pivot_longer(
