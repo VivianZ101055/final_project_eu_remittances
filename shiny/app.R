@@ -9,9 +9,26 @@ library(magrittr)
 library(base)
 library(reshape2)
 library(leaflet)
+library(maps)
 library(tidyverse)
 
 source("data.R")
+
+map_data_remittances <- full_data %>%
+  select(country_name, remittances_in_usd)
+
+data(world.cities)
+
+world.cities$country.etc[world.cities$country.etc == "Czechia"] <- "Czech Republic"
+
+world.cities$country.etc[world.cities$country.etc == "Slovakia"] <- "Slovak Republic"
+
+eu_capitals <- world.cities %>%
+  filter(capital == 1) %>%
+  mutate(country = as.character(country.etc)) %>%
+  inner_join(eumemberinfo, by = c("country" = "Name")) %>%
+  select(country, long, lat) %>%
+  filter(long != 33.38)
 
 #-----------------------------------------------------------------
 #--------------------------Shiny ui-------------------------------
@@ -61,10 +78,20 @@ ui <- fluidPage(
   
   navbarMenu("Remittance Maps",
              tabPanel("Inflows",
+                      leaflet(options = leafletOptions(dragging = TRUE,
+                                                       minZoom = 3,
+                                                       maxZoom = 6)) %>%
+                        addProviderTiles("CartoDB") %>%
+                        setView(30, 55, 3) %>%
+                        addMarkers(lng = map_data_remittances$lon,
+                                   lat = map_data_remittances$lat,
+                                   popup = map_data_remittances$hq) %>%
+                        setMaxBounds(lng1 = 0, lat1 = 35,
+                                  lng2 = 30, lat2 = 70)),
+             tabPanel("Outflows",
                       leaflet() %>%
-                        addProviderTiles() %>%
-                        setView(30, 55, 3)),
-             tabPanel("Outflows"))
+                        addTiles() %>%
+                        setView(30, 55, 3)))
   ))
 
 #-----------------------------------------------
