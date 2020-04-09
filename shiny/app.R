@@ -15,7 +15,7 @@ library(maps)
 
 library(tidyverse)
 
-wrld_simpl %>%
+wrld_simpl_data %>%
   leaflet() %>%
   addTiles() %>%
   addPolygons(weight = 1,
@@ -45,15 +45,19 @@ eu_capitals <- world.cities %>%
   select(country, long, lat) %>%
   filter(long != 33.38)
 
+# To prepare for the next step, creating a list of EU member countries.
+
 eumemberinfo$Name[eumemberinfo$Name == "Slovak Republic"] <- "Slovakia"
 
 eunames <- eumemberinfo %>%
   pull(Name)
 
+# Considers only the polygons for the EU countries.
+
 wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames),]
 
-australia.map < - world.map[world.map$NAME == "Australia",]
-plot(australia.map)
+# australia.map < - world.map[world.map$NAME == "Australia",]
+# plot(australia.map)
 
 #-----------------------------------------------------------------
 #--------------------------Shiny ui-------------------------------
@@ -103,7 +107,7 @@ ui <- fluidPage(
   
   navbarMenu("Remittance Maps",
              tabPanel("Inflows",
-                      leaflet(map_remittances, options = leafletOptions(dragging = TRUE,
+                      leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
                                                        minZoom = 3,
                                                        maxZoom = 6)) %>%
                         addProviderTiles("CartoDB") %>%
