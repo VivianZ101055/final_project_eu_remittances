@@ -45,7 +45,7 @@ names(name) <- c("sender")
 
 # Load remittances in USD in a given country, in alphabetical order
 
-# usd <- read_excel("data/remittances_usd.xls", skip = 2)
+usd <- read_excel("shiny/data/remittances_usd.xls", skip = 2)
 
 # Trying to get rid of the x in front of the data
 # Filter to only show between 1980 to present
@@ -72,7 +72,7 @@ full_data <- usd %>%
 
 # Load remittances as percentage of GDP for a given country
 
-percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 3)
+percent_gdp <- read_excel("shiny/data/remittance_percentgdp.xls", skip = 2)
 
 percent_gdp <- percent_gdp %>%
   pivot_longer(
@@ -99,3 +99,4 @@ mydata <- full_data %>%
   summarize(sum_remittance_usd = sum(remittances_in_usd)) %>%
   ungroup() %>%
   mutate(year = as.numeric(as.character(year)))
+
