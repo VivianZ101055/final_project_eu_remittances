@@ -51,7 +51,7 @@ names(name) <- c("sender")
 
 # Load remittances in USD in a given country, in alphabetical order
 
-usd <- read_excel("data/remittances_usd.xls", skip = 2)
+usd <- read_excel("shiny/data/remittances_usd.xls", skip = 2)
 
 # Trying to get rid of the x in front of the data
 # Filter to only show between 1980 to present
@@ -78,7 +78,7 @@ full_data <- usd %>%
 
 # Load remittances as percentage of GDP for a given country
 
-percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 2)
+percent_gdp <- read_excel("shiny/data/remittance_percentgdp.xls", skip = 2)
 
 percent_gdp <- percent_gdp %>%
   pivot_longer(
@@ -119,12 +119,17 @@ mydata <- full_data %>%
 full_data$country_name <- gsub('Slovak Republic', 'Slovakia', full_data$country_name)
 full_data <- full_data %>%
   arrange(country_name)
-wrld_simpl_data@data$NAME <- wrld_simpl_data@data$NAME %>%
-  arrange(NAME)
+# wrld_simpl_data@data$NAME <- wrld_simpl_data@data$NAME %>%
+#   arrange(NAME)
 test2 <- full_data[full_data$country_name %in% test & full_data$year == 2000, ]
 colnames(test2)[1] <- 'NAME'
 test3 <- merge.data.frame(wrld_simpl_data@data, test2, 'NAME')
 wrld_simpl_data@data <- test3
+full_data <- full_data %>%
+  filter(year == 2000)
+
+# Join remittance data to the country data
+# Left_join
 
 wrld_simpl_data %>%
   leaflet() %>%
@@ -143,7 +148,7 @@ load(url("http://spatial.nhh.no/R/etc/TM_WORLD_BORDERS_SIMPL-0.2.RData"))
 
 data(world.cities)
 
-# data(wrld_simpl)
+data(wrld_simpl)
 
 world.cities$country.etc[world.cities$country.etc == "Czechia"] <- "Czech Republic"
 
@@ -165,10 +170,10 @@ eunames <- eumemberinfo %>%
 
 # Considers only the polygons for the EU countries.
 
-wrld_simpl@data %>%
-  arrange()
-
 wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames), ]
+
+# wrld_simpl_data@data <- wrld_simpl_data@data %>%
+#   arrange(wrld_simpl_data@data$NAME)
 
 # australia.map < - world.map[world.map$NAME == "Australia",]
 # plot(australia.map)
