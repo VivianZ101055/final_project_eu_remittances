@@ -1,3 +1,14 @@
+---
+title: "test"
+author: "Vivian Zhang"
+date: "4/22/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
 library(shiny)
 library(shinythemes)
 library(plotly)
@@ -11,6 +22,7 @@ library(leaflet)
 library(sp)
 library(maptools)
 library(maps)
+
 library(tidyverse)
 
 data(wrld_simpl)
@@ -99,55 +111,61 @@ full_data <- full_data %>%
 
 # Setup for ggplot of Remittances in USD
 
-mydata <- full_data %>%
-  na.omit %>%
-  group_by(year) %>%
-  summarize(sum_remittance_usd = sum(remittances_in_usd)) %>%
-  ungroup() %>%
-  mutate(year = as.numeric(as.character(year)))
+# mydata <- full_data %>%
+#   na.omit %>%
+#   group_by(year) %>%
+#   summarize(sum_remittance_usd = sum(remittances_in_usd)) %>%
+#   ungroup() %>%
+#   mutate(year = as.numeric(as.character(year)))
 
-# For naming consistency
+# usd <- read_excel("shiny/data/remittances_usd.xls", skip = 2)
+
+#source("shiny/data.R")
+
+# Things to fix: change the labels and numbers for hovering results to be
+# correct. Figure out how to load data properly on the data.R file and how to
+# organize data for submission. Figure out how to get the chloropeth plot and
+# what exactly to pipe in to have the wrld_simpl_data plot to show up on the
+# shinyapp.
 
 full_data$country_name <- gsub('Slovak Republic', 'Slovakia', full_data$country_name)
-
-# Testing data from a specific year
 
 full_data <- full_data %>%
   filter(year == 2000)
 
-# Reordering full_data to match natural order from world_simpl, our Large
-# Spatial Polygons Dataframe.
-
 target_order <- wrld_simpl_data@data$NAME
+
 full_data <- full_data[match(target_order, full_data$country_name),]
 
-full_data <- full_data %>%
-  mutate(remittance_in_billions = remittances_in_usd/1000000000)
+# full_data$country_name <- reorder.factor(full_data$country_name, new.order=wrld_simpl_data@data$NAME)
 
-# pal <- colorNumeric(
-#   palette = "Blues",
-#   domain = full_data$remittances_in_usd
-# )
+# ordered_full_data <- wrld_simpl_data@data %>%
+#   inner_join(full_data, by = c("NAME" = "country_name"))
 
-bins <- c()
-pal <- colorBin("Reds", domain = full_data$remittances_in_billions, bins = bins)
+# full_data <- full_data %>%
+#   arrange(country_name)
+# wrld_simpl_data@data$NAME <- wrld_simpl_data@data$NAME %>%
+#   arrange(NAME)
+# test2 <- full_data[full_data$country_name %in% test & full_data$year == 2000, ]
+# colnames(test2)[1] <- 'NAME'
+# test3 <- merge.data.frame(wrld_simpl_data@data, test2, 'NAME')
+# wrld_simpl_data@data <- test3
+
+# Join remittance data to the country data
+# Left_join
 
 wrld_simpl_data %>%
   leaflet() %>%
   addTiles() %>%
-  addPolygons(weight = 2,
-              opacity = 1,
-              fillColor = ~pal(full_data$remittances_in_usd),
-              fillOpacity = 1,
-              color = "black",
-              label = ~paste0("Country: ", wrld_simpl_data@data$NAME, ", ",
-                              "Total Remittances: $", full_data$remittances_in_billions, sep=""),
-              labelOptions = labelOptions(
-                style = list("font-weight" = "normal", padding = "3px 8px"),
-                textsize = "12px",
-                direction = "auto"
-              ),
-              highlight = highlightOptions(weight = 3, color = "white", bringToFront = TRUE))
+  addPolygons(weight = 1,
+              color = "blue",
+              label = ~paste0("Country: ", wrld_simpl_data@data$NAME, ",\n",
+                              "Total Remittances: $", full_data$remittances_in_usd, sep=""),
+              highlight = highlightOptions(weight = 3, color = "red", bringToFront = TRUE))
+  # colorNumeric(palette = "Blues",
+  #              domain = log(wrld_simpl_data@data$remmitance_inflows))
+
+load(url("http://spatial.nhh.no/R/etc/TM_WORLD_BORDERS_SIMPL-0.2.RData"))
 
 # Arrange world simple first
 
