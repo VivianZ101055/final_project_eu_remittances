@@ -51,6 +51,8 @@ names(name) <- c("sender")
 
 # Load remittances in USD in a given country, in alphabetical order
 
+# FLAG
+
 usd_inflows <- read_excel("data/april2020_remittanceinflows.xlsx", skip = 0)
 
 # Trying to get rid of the x in front of the data
@@ -80,24 +82,46 @@ full_data <- usd_inflows %>%
 
 # Load remittances as percentage of GDP for a given country
 
+# FLAG
+
 percent_gdp <- read_excel("data/remittance_percentgdp.xls", skip = 2)
 
 percent_gdp <- percent_gdp %>%
   pivot_longer(
-    cols = "1980":"2018",
+    cols = `1980`:`2018`,
     names_to = "year",
     names_prefix = "yr") %>%
   rename("remittances_percent_gdp" = value) %>%
   clean_names %>%
   filter(country_name %in% name$sender)
 
-percent_gdp <- percent_gdp[,-c(2:25)]
+percent_gdp <- percent_gdp[,-c(2:20)]
 
 # Join this with the previous data and select only the relevant columns
 
 full_data <- full_data %>%
   inner_join(percent_gdp, by = c("country_name"="country_name", "year"="year"), suffix = c("_usd", "_gdp")) %>%
   select(country_name, accession, year, remittances_in_usd, remittances_percent_gdp)
+
+# FLAG
+
+remittance_outflows <- read_excel("data/remittance_outflow_april2020.xlsx", skip = 0)
+
+remittance_outflows <- remittance_outflows %>%
+  pivot_longer(
+    cols = `1980`:`2018`,
+    names_to = "year",
+    names_prefix = "yr"
+  ) %>%
+  clean_names() %>%
+  rename("country_name" = migrant_remittance_outflows_us_million)
+
+remittance_outflows <- remittance_outflows[,-c(2)]
+
+full_data <- full_data %>%
+  inner_join(remittance_outflows, by = c("country_name"="country_name", "year"="year")) %>%
+  rename(remittances_outflows = value) %>%
+  select(country_name, accession, year, remittances_in_usd, remittances_percent_gdp, remittances_outflows)
 
 # Setup for ggplot of Remittances in USD
 
@@ -108,8 +132,8 @@ mydata <- full_data %>%
   ungroup() %>%
   mutate(year = as.numeric(as.character(year)))
 
-full_data <- full_data %>%
-  filter(year == 2000)
+# full_data <- full_data %>%
+#   filter(year == 2000)
 
 # For naming consistency
 
@@ -128,47 +152,14 @@ wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames), ]
 # Spatial Polygons Dataframe.
 
 target_order <- wrld_simpl_data@data$NAME
-full_data <- full_data[match(target_order, full_data$country_name),]
 
-full_data <- full_data %>%
-  mutate(remittances_in_millions = remittances_in_usd/1000000)
+# require(gdata)
+# full_data <- reorder.factor(full_data$country_name, new.order=target_order)
+
+full_data <- full_data[match(target_order, full_data$country_name), ]
 
 bins <- c(0,10,20,50,100,200,500,1000,5000,10000)
-pal <- colorBin("YlOrRd", domain = full_data$remittances_in_millions, bins = bins)
-
-# wrld_simpl_data %>%
-#   leaflet() %>%
-#   addTiles() %>%
-#   addPolygons(weight = 2,
-#               opacity = 1,
-#               fillColor = ~pal(full_data$remittances_in_millions),
-#               fillOpacity = 1,
-#               color = "black",
-#               label = ~paste0("Country: ", wrld_simpl_data@data$NAME, ", ",
-#                               "Total Remittances: $", round(full_data$remittances_in_millions,2), sep=""),
-#               labelOptions = labelOptions(
-#                 style = list("font-weight" = "normal", padding = "3px 8px"),
-#                 textsize = "12px",
-#                 direction = "auto"
-#               ),
-#               highlight = highlightOptions(weight = 3, color = "white", bringToFront = TRUE)) %>%
-#   addLegend(pal = pal, values = ~full_data$remittances_in_millions, opacity = 0.7, 
-#             title = "Remittances in Millions of USD", position = "bottomright")
-
-# # Arrange world simple first
-# 
-data(world.cities)
-
-world.cities$country.etc[world.cities$country.etc == "Czechia"] <- "Czech Republic"
-
-world.cities$country.etc[world.cities$country.etc == "Slovakia"] <- "Slovak Republic"
-
-eu_capitals <- world.cities %>%
-  filter(capital == 1) %>%
-  mutate(country = as.character(country.etc)) %>%
-  inner_join(eumemberinfo, by = c("country" = "Name")) %>%
-  select(country, long, lat) %>%
-  filter(long != 33.38)
+pal <- colorBin("YlOrRd", domain = full_data$remittances_in_usd, bins = bins)
 
 #-----------------------------------------------------------------
 #--------------------------Shiny ui-------------------------------
@@ -213,12 +204,34 @@ ui <- fluidPage(
                       ),
   
   navbarMenu("Remittance Maps",
-             sidebarLayout(
-                 h3("Interactive Map for Remittance Inflows in Europe"),
-                 p("The World Bank sourced this data from the IMF Balance of Statistics database and data from central banks and national statistical agencies."),
-                 p("All amounts you see below are in US Dollars.")
-               ),
+             # sidebarLayout(
+             #     h3("Interactive Map for Remittance Inflows in Europe"),
+             #     p("The World Bank sourced this data from the IMF Balance of Statistics database and data from central banks and national statistical agencies."),
+             #     p("All amounts you see below are in US Dollars.")
+             #   ),
              tabPanel("Inflows",
+                      h4("This is a map of inflows."),
+                      
+                      sidebarPanel(
+                        sliderInput("year", "Select Year", min = 1980, max = 2018,
+                                    value = 2000, sep = "", animate = TRUE)
+                      ),
+                  
+                      # fluidRow(
+                      #   column(4,
+                      #          
+                      #          # Copy the line below to make a slider bar 
+                      #          sliderInput("full_data$year", label = h3("Select Year"), min = min(full_data$year), 
+                      #                      max = max(full_data$year), value = 2000)
+                      #   )),
+                      # hr(),
+                      # 
+                      # fluidRow(
+                      #   column(4, verbatimTextOutput("value")),
+                      #   column(4, verbatimTextOutput("range"))
+                      # ),
+      
+                   
                       leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
                                                                         minZoom = 3,
                                                                         maxZoom = 6)) %>%
@@ -226,43 +239,42 @@ ui <- fluidPage(
                         setView(30, 55, 3) %>%
                         addPolygons(weight = 2,
                                     opacity = 1,
-                                    fillColor = ~pal(full_data$remittances_in_millions),
+                                    fillColor = ~pal(full_data$remittances_in_usd),
                                     fillOpacity = 1,
                                     color = "black",
                                     label = ~paste0("Country: ", wrld_simpl_data@data$NAME, ", ",
-                                                    "Total Remittances: $", round(full_data$remittances_in_millions,0), " Mln", sep=""),
+                                                    "Total Remittances: $", round(full_data$remittances_in_usd,0), " Mln", sep=""),
                                     labelOptions = labelOptions(
                                       style = list("font-weight" = "normal", padding = "3px 8px"),
                                       textsize = "12px",
                                       direction = "auto"
                                     ),
                                     highlight = highlightOptions(weight = 3, color = "white", bringToFront = TRUE)) %>%
-                        addLegend(pal = pal, values = ~full_data$remittances_in_millions, opacity = 0.7, 
-                                  title = "Remittances in Millions of USD", position = "bottomright")),
-             # tabPanel("Inflows",
-             #          leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
-             #                                           minZoom = 3,
-             #                                           maxZoom = 6)) %>%
-             #            addProviderTiles("CartoDB") %>%
-             #            setView(30, 55, 3) %>%
-             #            addCircleMarkers(lng = eu_capitals$long,
-             #                       lat = eu_capitals$lat,
-             #                       label = eu_capitals$country,
-             #                       radius = 5,
-             #                       color = "blue") %>%
-             #            addPolygons(weight = 1,
-             #                        color = "blue",
-             #                        label = ~paste0("Country: ", full_data$country_name, "\n",
-             #                                        "Total Remittances: ", full_data$remittances_in_usd),
-             #                        highlight = highlightOptions(weight = 3, color = "red", bringToFront = TRUE)) %>%
-             #            colorNumeric(palette = "Blues",
-             #                         domain = log(full_data$remittances_in_usd)) %>%
-             #            setMaxBounds(lng1 = 15, lat1 = 35,
-             #                      lng2 = 20, lat2 = 70)),
+                        addLegend(pal = pal, values = ~full_data$remittances_in_usd, opacity = 0.7, 
+                                  title = "Remittances in Millions of USD", position = "bottomright") %>%
+                        setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70)),
              tabPanel("Outflows",
-                      leaflet() %>%
-                        addTiles() %>%
-                        setView(30, 55, 3)))
+                      leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
+                                                                        minZoom = 3,
+                                                                        maxZoom = 6)) %>%
+                        addProviderTiles("CartoDB") %>%
+                        setView(30, 55, 3) %>%
+                        addPolygons(weight = 2,
+                                    opacity = 1,
+                                    fillColor = ~pal(full_data$remittances_outflows),
+                                    fillOpacity = 1,
+                                    color = "black",
+                                    label = ~paste0("Country: ", wrld_simpl_data@data$NAME, ", ",
+                                                    "Total Remittances: $", round(full_data$remittances_outflows,0), " Mln", sep=""),
+                                    labelOptions = labelOptions(
+                                      style = list("font-weight" = "normal", padding = "3px 8px"),
+                                      textsize = "12px",
+                                      direction = "auto"
+                                    ),
+                                    highlight = highlightOptions(weight = 3, color = "white", bringToFront = TRUE)) %>%
+                        addLegend(pal = pal, values = ~full_data$remittances_in_usd, opacity = 0.7, 
+                                  title = "Remittances in Millions of USD", position = "bottomright") %>%
+                        setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70)))
   ))
 
 #-----------------------------------------------
@@ -281,27 +293,29 @@ server <- function(input, output){
   output$distPlot <- renderPlotly({
     p <- ggplot(mydata, aes(x = year, y = sum_remittance_usd)) +
       geom_line(color = "light blue") +
-      geom_point(aes(text = 
-                       paste0("Year: ", year, "\n", 
+      geom_point(aes(text = paste0("Year: ", year, "\n", 
                               "Total Remittances: $",
-                              round(sum_remittance_usd/1000000000,0),
-                              "B", sep="")), color = "dark blue") +
+                              round(sum_remittance_usd,0),
+                              " Mln", sep="")), color = "dark blue") +
       labs(title = "Total remittances flowing into the EU, by year",
            x = "Year",
-           y = "Total Remittances (in Billions of USD)") +
+           y = "Total Remittances (in Millions of USD)") +
       scale_x_continuous(limits = c(1980, 2018),
                          breaks = c(1980, 1985, 1990, 1995, 2000, 2005, 2010,
                                     2015),
                          labels = c("1980", "1985", "1990", "1995",
                                     "2000", "2005", "2010",
                                     "2015")) +
-      scale_y_continuous(limits = c(0, 120000000000),
-                         breaks = c(0, 10000000000, 20000000000, 30000000000,
-                                    40000000000, 50000000000, 60000000000,
-                                    70000000000, 80000000000, 90000000000,
-                                    100000000000, 110000000000, 120000000000),
-                         labels = c("0", "10", "20", "30", "40", "50", "60", "70", "80",
-                                    "90", "100", "110", "120")) +
+      scale_y_continuous(limits = c(0, 150000),
+                         breaks = c(0, 10000, 20000, 30000,
+                                    40000, 50000, 60000,
+                                    70000, 80000, 90000,
+                                    100000, 110000, 120000, 130000,
+                                    140000, 150000),
+                         labels = c("0", "10000", "20000", "30000", "40000", 
+                                    "50000", "60000", "70000", "80000",
+                                    "90000", "100000", "110000", "120000",
+                                    "130000", "140000", "150000")) +
       theme_classic()
     
     # Generates the plot with text hovering feature
@@ -309,6 +323,8 @@ server <- function(input, output){
     ggplotly(p, tooltip = "text")
     
     })
+  
+  # output$value <- renderPrint({ full_data$year })
 }
 
 shinyApp(ui = ui, server = server)
