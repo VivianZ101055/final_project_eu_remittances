@@ -23,6 +23,8 @@ library(maptools)
 library(maps)
 library(tidyverse)
 
+data(wrld_simpl)
+
 ```
 
 ```{r}
@@ -146,24 +148,23 @@ full_data$country_name <- gsub('Slovak Republic', 'Slovakia', full_data$country_
 eumemberinfo$Name[eumemberinfo$Name == "Slovak Republic"] <- "Slovakia"
 
 eunames <- eumemberinfo %>%
-  pull(Name)
-
-# Considers only the polygons for the EU countries.
-
-wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames), ]
-
-# Reordering full_data to match natural order from world_simpl, our Large
-# Spatial Polygons Dataframe.
-
-target_order <- wrld_simpl_data@data$NAME
-
-# require(gdata)
-# full_data <- reorder.factor(full_data$country_name, new.order=target_order)
-
-full_data <- full_data[match(target_order, full_data$country_name), ]
+#   pull(Name)
+# 
+# # Considers only the polygons for the EU countries.
+# 
+# wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames), ]
+# # 
+# # # Reordering full_data to match natural order from world_simpl, our Large
+# # # Spatial Polygons Dataframe.
+# # 
+# target_order <- wrld_simpl_data@data$NAME
+# 
+# full_data <- full_data[match(target_order, full_data$country_name), ]
 
 saveRDS(object = full_data, file = "shiny/full_data.rds")
 
 saveRDS(object = mydata, file = "shiny/mydata.rds")
+
+saveRDS(object = eunames, file = "shiny/eunames.rds")
 
 ```
