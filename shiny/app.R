@@ -46,39 +46,39 @@ ui <- fluidPage(
   
   navbarPage(tags$b("EU Remittance Flows"),
              
-             tabPanel("About",
-                      imageOutput("global_remittance", width = "100%", 
-                                  height = "100%"),
-                      h1(tags$b("EU Remittance Flows"), align = "center"),
-                      p(tags$em("Models of Remittance Inflows and Outflows over the last 40 years"),
-                        align = "center"),
-                      p("Welcome! This webpage looks at remittance flows in the EU from the 2000 to 2018.",
-                        align = "center"),
-                      h2(tags$b("Contact")),
-                      p("Hi! I am Vivian Zhang, a first year at Harvard College studying Economics with a secondary in Government!"),
-                      p("You can reach me at vivianzhang@college.harvard.edu."),
-                      p("The code for this project can be accessed from",
-                        a(href="https://github.com/VivianZ101055", "my github repository.")),
-                      br(),
-                      hr("Acknowledgements:"),
-                      p("Thank you to Preceptor David Kane and all the members of GOV 1005 for introducing me to data science and helping me on this project!")
-             ),
-             
-             tabPanel("Graphs",
-                      sidebarLayout(
-                        sidebarPanel(
-                          h3("Interactive Graphs")
-                        ),
-                        mainPanel(
-                          tabsetPanel(
-                            tabPanel("Remittances in USD",
-                                     plotlyOutput("distPlot"))
-                            ),
-                          tabsetPanel(
-                            tabPanel("Remittances as a Percentage of GDP")
-                          ))
-                        )
-                      ),
+             # tabPanel("About",
+             #          imageOutput("global_remittance", width = "100%", 
+             #                      height = "100%"),
+             #          h1(tags$b("EU Remittance Flows"), align = "center"),
+             #          p(tags$em("Models of Remittance Inflows and Outflows over the last 40 years"),
+             #            align = "center"),
+             #          p("Welcome! This webpage looks at remittance flows in the EU from the 2000 to 2018.",
+             #            align = "center"),
+             #          h2(tags$b("Contact")),
+             #          p("Hi! I am Vivian Zhang, a first year at Harvard College studying Economics with a secondary in Government!"),
+             #          p("You can reach me at vivianzhang@college.harvard.edu."),
+             #          p("The code for this project can be accessed from",
+             #            a(href="https://github.com/VivianZ101055", "my github repository.")),
+             #          br(),
+             #          hr("Acknowledgements:"),
+             #          p("Thank you to Preceptor David Kane and all the members of GOV 1005 for introducing me to data science and helping me on this project!")
+             # ),
+             # 
+             # tabPanel("Graphs",
+             #          sidebarLayout(
+             #            sidebarPanel(
+             #              h3("Interactive Graphs")
+             #            ),
+             #            mainPanel(
+             #              tabsetPanel(
+             #                tabPanel("Remittances in USD",
+             #                         plotlyOutput("distPlot"))
+             #                ),
+             #              tabsetPanel(
+             #                tabPanel("Remittances as a Percentage of GDP")
+             #              ))
+             #            )
+             #          ),
   
   navbarMenu("Remittance Maps",
              # sidebarLayout(
@@ -90,11 +90,17 @@ ui <- fluidPage(
                       # h4("This is a map of inflows."),
                       
                       sidebarPanel(
-                        selectInput("year", label = "Year", 
-                                    choices = 2000:2018, selected = 2000),
-                        mainPanel(
-                          leafletOutput("inflows", width = 100, height = 400)
-                        ))))))
+                        # slideInput("year", label = "Year",
+                        #            min = 2000, max = 2018, value = 2001)),
+                        selectInput("year", label = "Year",
+                                    choices = 2000:2018, selected = 2000)),
+                      mainPanel(leafletOutput("inflows", width = 900, height = 600))))))
+                      
+                        # mainPanel(
+                        #   leafletOutput("inflows", width = 600, height = 500),
+                        #  # textOutput("debug"),
+                        #  # textOutput("debug2")
+                        # ))))))
                        # sliderInput("year_inflows", label = strong("Select Year"), min = 1980, max = 2018,
                                   #  value = 2000, sep = ""))),
                       # subset<-reactive({full_data %>% filter(year_inflows %in% input$year_inflows)}),
@@ -163,74 +169,82 @@ ui <- fluidPage(
 
 server <- function(input, output){
   
-  output$global_remittance <- renderImage({
-    list(src = "shiny_files/remittances.png",
-         height = 300,
-         width = 600,
-         style = "display: block; margin-left: auto; margin-right:auto")
-  }, deleteFile = FALSE
-  )
-  
-  output$distPlot <- renderPlotly({
-    p <- ggplot(mydata, aes(x = year, y = sum_remittance_usd)) +
-      geom_line(color = "light blue") +
-      geom_point(aes(text = paste0("Year: ", year, "\n", 
-                              "Total Remittances: $",
-                              round(sum_remittance_usd,0),
-                              " Mln", sep="")), color = "dark blue") +
-      labs(title = "Total remittances flowing into the EU, by year",
-           x = "Year",
-           y = "Total Remittances (in Millions of USD)") +
-      scale_x_continuous(limits = c(1980, 2018),
-                         breaks = c(1980, 1985, 1990, 1995, 2000, 2005, 2010,
-                                    2015),
-                         labels = c("1980", "1985", "1990", "1995",
-                                    "2000", "2005", "2010",
-                                    "2015")) +
-      scale_y_continuous(limits = c(0, 150000),
-                         breaks = c(0, 10000, 20000, 30000,
-                                    40000, 50000, 60000,
-                                    70000, 80000, 90000,
-                                    100000, 110000, 120000, 130000,
-                                    140000, 150000),
-                         labels = c("0", "10000", "20000", "30000", "40000", 
-                                    "50000", "60000", "70000", "80000",
-                                    "90000", "100000", "110000", "120000",
-                                    "130000", "140000", "150000")) +
-      theme_classic()
-    
-    # Generates the plot with text hovering feature
-    
-    ggplotly(p, tooltip = "text")
-    
-    })
+  # output$global_remittance <- renderImage({
+  #   list(src = "shiny_files/remittances.png",
+  #        height = 300,
+  #        width = 600,
+  #        style = "display: block; margin-left: auto; margin-right:auto")
+  # }, deleteFile = FALSE
+  # )
+  # 
+  # output$distPlot <- renderPlotly({
+  #   p <- ggplot(mydata, aes(x = as.numeric(year), y = sum_remittance_usd)) +
+  #     geom_line(color = "light blue") +
+  #     geom_point(aes(text = paste0("Year: ", year, "\n", 
+  #                             "Total Remittances: $",
+  #                             round(sum_remittance_usd,0),
+  #                             " Mln", sep="")), color = "dark blue") +
+  #     labs(title = "Total remittances flowing into the EU, by year",
+  #          x = "Year",
+  #          y = "Total Remittances (in Millions of USD)") +
+  #     scale_x_continuous(limits = c(1980, 2018),
+  #                        breaks = c(1980, 1985, 1990, 1995, 2000, 2005, 2010,
+  #                                   2015),
+  #                        labels = c("1980", "1985", "1990", "1995",
+  #                                   "2000", "2005", "2010",
+  #                                   "2015")) +
+  #     scale_y_continuous(limits = c(0, 150000),
+  #                        breaks = c(0, 10000, 20000, 30000,
+  #                                   40000, 50000, 60000,
+  #                                   70000, 80000, 90000,
+  #                                   100000, 110000, 120000, 130000,
+  #                                   140000, 150000),
+  #                        labels = c("0", "10000", "20000", "30000", "40000", 
+  #                                   "50000", "60000", "70000", "80000",
+  #                                   "90000", "100000", "110000", "120000",
+  #                                   "130000", "140000", "150000")) +
+  #     theme_classic()
+  #   
+  #   # Generates the plot with text hovering feature
+  #   
+  #   ggplotly(p, tooltip = "text")
+  #   
+  #   })
   
   output$inflows <- renderLeaflet({
+    #x <- as.numeric(input$year())
+    #output$debug <- renderText({print(input$year)})
+    #output$debug2 <- renderText({print(x)})
     
-    # x <- as.numeric(input$year)
+    pal_val <- full_data %>% 
+      filter(as.character(year) == input$year) %>%
+      na.omit()
     
-    pal_val <- full_data[full_data$year == input$year,]
-    
-    pal <- colorBin("YlOrRd", 
+    pal <- colorBin("viridis",
              domain = pal_val$remittances_in_usd,
              bins = bins)
     
     leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
-                                                      minZoom = 3,
+                                                      minZoom = 3.2,
                                                       maxZoom = 6)) %>%
       addProviderTiles("CartoDB") %>%
       setView(30, 55, 3) %>%
       setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70) %>%
       addPolygons(weight = 2,
                   opacity = 1,
-                  fillColor = ~pal(pal_val),
-                  fillOpacity = 0.7,
-                  color = "white",
+                  fillColor = ~pal(pal_val$remittances_in_usd),
+                  fillOpacity = 1,
+                  color = "black",
                   label = ~paste0("Country: ", 
                                   wrld_simpl_data@data$NAME, ", ", 
                                   "Total Remittances: $", 
-                                  round(pal_val$remittances_in_usd,0),
-                                  " Mln", sep=""))
+                                  pal_val$remittances_in_usd,
+                                  " Mln", sep=""),
+                  highlight = highlightOptions(weight = 3, color = "white", 
+                                               bringToFront = TRUE)) %>%
+      addLegend(pal = pal, values = ~full_data$remittances_in_usd, opacity = 0.7,
+                title = "Remittances in Millions of USD", 
+                position = "bottomright")
     
   })
   
@@ -295,9 +309,9 @@ server <- function(input, output){
   #   #   wrld_simpl_data@data$NAME, filteredData()$remittances_in_usd) %>%
   #   #   lapply(htmltools::HTML)
   #   
-  #   leafletProxy("inflows", data = filteredData) %>%
-  #     clearPopups() %>%
-  #     clearShapes() %>%
+    # leafletProxy("inflows", data = filteredData) %>%
+    #   clearPopups() %>%
+    #   clearShapes() %>%
   #     addPolygons(weight = 2,
   #                 opacity = 1,
   #                 fillColor = ~colorBin("YlOrRd", 
