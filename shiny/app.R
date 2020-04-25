@@ -207,17 +207,13 @@ server <- function(input, output){
   
   output$inflows <- renderLeaflet({
     
-    x <- as.numeric(input$year)
+    # x <- as.numeric(input$year)
     
-    filtered_data <- full_data %>%
-      filter(year == x) %>%
-      select(remittances_in_usd)
+    pal_val <- full_data[full_data$year == input$year,]
     
     pal <- colorBin("YlOrRd", 
-             domain = filtered_data$remittances_in_usd,
+             domain = pal_val$remittances_in_usd,
              bins = bins)
-    
-    pal_val <- full_data[full_data$year == x,]
     
     leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
                                                       minZoom = 3,
@@ -233,7 +229,7 @@ server <- function(input, output){
                   label = ~paste0("Country: ", 
                                   wrld_simpl_data@data$NAME, ", ", 
                                   "Total Remittances: $", 
-                                  round(filteredData$remittances_in_usd,0),
+                                  round(pal_val$remittances_in_usd,0),
                                   " Mln", sep=""))
     
   })
