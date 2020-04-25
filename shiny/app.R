@@ -93,7 +93,7 @@ ui <- fluidPage(
                         # slideInput("year", label = "Year",
                         #            min = 2000, max = 2018, value = 2001)),
                         selectInput("year", label = "Year",
-                                    choices = 2000:2018, selected = 2000)),
+                                    choices = 2000:2018, selected = 2010)),
                       mainPanel(leafletOutput("inflows", width = 900, height = 600))))))
                       
                         # mainPanel(
@@ -230,11 +230,13 @@ server <- function(input, output){
       addProviderTiles("CartoDB") %>%
       setView(30, 55, 3) %>%
       setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70) %>%
+      clearPopups() %>%
+      clearShapes() %>%
       addPolygons(weight = 2,
                   opacity = 1,
+                  color = "black",
                   fillColor = ~pal(pal_val$remittances_in_usd),
                   fillOpacity = 1,
-                  color = "black",
                   label = ~paste0("Country: ", 
                                   wrld_simpl_data@data$NAME, ", ", 
                                   "Total Remittances: $", 
