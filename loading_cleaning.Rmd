@@ -148,7 +148,7 @@ full_data$country_name <- gsub('Slovak Republic', 'Slovakia', full_data$country_
 eumemberinfo$Name[eumemberinfo$Name == "Slovak Republic"] <- "Slovakia"
 
 eunames <- eumemberinfo %>%
-#   pull(Name)
+   pull(Name)
 # 
 # # Considers only the polygons for the EU countries.
 # 
@@ -161,10 +161,10 @@ eunames <- eumemberinfo %>%
 # 
 # full_data <- full_data[match(target_order, full_data$country_name), ]
 
-saveRDS(object = full_data, file = "shiny/full_data.rds")
+saveRDS(object = full_data,file = "shiny/full_data.rds")
 
-saveRDS(object = mydata, file = "shiny/mydata.rds")
+saveRDS(object = mydata,file = "shiny/mydata.rds")
 
-saveRDS(object = eunames, file = "shiny/eunames.rds")
+saveRDS(object = eunames,file = "shiny/eunames.rds")
 
 ```
