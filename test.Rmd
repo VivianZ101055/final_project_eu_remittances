@@ -27,6 +27,47 @@ library(tidyverse)
 
 data(wrld_simpl)
 
+label = ~paste0("Country: ", wrld_simpl_data@data$NAME, ", ",
+                  #                 "Total Remittances: $", 
+                  #                 round(pal_val,0), 
+                  #                 " Mln", sep=""),
+                  # labelOptions = labelOptions(
+                  #   style = list("font-weight" = "normal", padding = "3px 8px"),
+                  #   textsize = "12px",
+                  #   direction = "auto"),
+                  # highlight = highlightOptions(weight = 3, color = "white", bringToFront = TRUE)) %>%
+
+ 
+  # output$value <- renderPrint({ full_data$year })
+  
+  # output$inflows <- renderLeaflet({
+  #   
+  #   full_data$year <- as.numeric(input$year_inflows)
+  #   
+  #   leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
+  #                                                     minZoom = 3,
+  #                                                     maxZoom = 6)) %>%
+  #     addProviderTiles("CartoDB") %>%
+  #     setView(30, 55, 3) %>%
+  #     addPolygons(weight = 2,
+  #                 opacity = 1,
+  #                 fillColor = ~pal(full_data$remittances_in_usd),
+  #                 fillOpacity = 1,
+  #                 color = "black",
+  #                 label = ~paste0("Country: ", wrld_simpl_data@data$NAME, ", ",
+  #                                 "Total Remittances: $", round(full_data$remittances_in_usd,0), " Mln", sep=""),
+  #                 labelOptions = labelOptions(
+  #                   style = list("font-weight" = "normal", padding = "3px 8px"),
+  #                   textsize = "12px",
+  #                   direction = "auto"
+  #                 ),
+  #                 highlight = highlightOptions(weight = 3, color = "white", bringToFront = TRUE)) %>%
+  #     addLegend(pal = pal, values = ~full_data$remittances_in_usd, opacity = 0.7,
+  #               title = "Remittances in Millions of USD", position = "bottomright") %>%
+  #     setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70)
+  # })
+  
+
 ## PART ONE: DATA WRANGLING
 
 #---------------------------------------------------------------------

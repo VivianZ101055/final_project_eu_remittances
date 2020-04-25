@@ -52,6 +52,8 @@ eumemberinfo$Accession <- substr(eumemberinfo$Accession, 0, 4)
 
 eumemberinfo$Name[eumemberinfo$Name == "Czechia"] <- "Czech Republic"
 
+eumemberinfo$Name[eumemberinfo$Name == "Slovak Republic"] <- "Slovakia"
+
 name <- eumemberinfo %>%
   select(Name)
 
@@ -65,23 +67,26 @@ names(name) <- c("sender")
 usd_inflows <- read_excel("shiny/data/april2020_remittanceinflows.xlsx", skip = 0)
 
 # Trying to get rid of the x in front of the data
-# Filter to only show between 1980 to present
+# Filter to only show between 2000 to present
 # Repeatedly getting the error that argument "pattern" is missing, with no
 # default
 # Convert USD to Euros - maybe later
 
 usd_inflows <- usd_inflows %>%
   pivot_longer(
-    cols = `1980`:`2018`,
+    cols = `2000`:`2018`,
     names_to = "year",
     names_prefix = "yr"
   ) %>%
   clean_names() %>%
   rename("country_name" = migrant_remittance_inflows_us_million)
 
-usd_inflows <- usd_inflows[,-c(2:3)]
+usd_inflows <- usd_inflows[,-c(2:23)]
 
 # join this with the eumemberinfo to only look at member states
+
+usd_inflows$country_name <- gsub('Slovak Republic', 'Slovakia',
+                               usd_inflows$country_name)
 
 full_data <- usd_inflows %>%
   inner_join(eumemberinfo, by = c("country_name" = "Name")) %>%
@@ -93,16 +98,19 @@ full_data <- usd_inflows %>%
 
 percent_gdp <- read_excel("shiny/data/remittance_percentgdp.xls", skip = 2)
 
+percent_gdp$`Country Name` <- gsub('Slovak Republic', 'Slovakia',
+                               percent_gdp$`Country Name`)
+
 percent_gdp <- percent_gdp %>%
   pivot_longer(
-    cols = `1980`:`2018`,
+    cols = `2000`:`2018`,
     names_to = "year",
     names_prefix = "yr") %>%
   rename("remittances_percent_gdp" = value) %>%
   clean_names %>%
   filter(country_name %in% name$sender)
 
-percent_gdp <- percent_gdp[,-c(2:20)]
+percent_gdp <- percent_gdp[,-c(2:45)]
 
 # Join this with the previous data and select only the relevant columns
 
@@ -110,19 +118,20 @@ full_data <- full_data %>%
   inner_join(percent_gdp, by = c("country_name"="country_name", "year"="year"), suffix = c("_usd", "_gdp")) %>%
   select(country_name, accession, year, remittances_in_usd, remittances_percent_gdp)
 
-
 remittance_outflows <- read_excel("shiny/data/remittance_outflow_april2020.xlsx", skip = 0)
+
+remittance_outflows$`Migrant remittance outflows (US$ million)` <- gsub('Slovak Republic', 'Slovakia', remittance_outflows$`Migrant remittance outflows (US$ million)`)
 
 remittance_outflows <- remittance_outflows %>%
   pivot_longer(
-    cols = `1980`:`2018`,
+    cols = `2000`:`2018`,
     names_to = "year",
     names_prefix = "yr"
   ) %>%
   clean_names() %>%
   rename("country_name" = migrant_remittance_outflows_us_million)
 
-remittance_outflows <- remittance_outflows[,-c(2)]
+remittance_outflows <- remittance_outflows[,-c(2:22)]
 
 full_data <- full_data %>%
   inner_join(remittance_outflows, by = c("country_name"="country_name", "year"="year")) %>%
@@ -140,12 +149,6 @@ mydata <- full_data %>%
 
 # full_data <- full_data %>%
 #   filter(year == 2000)
-
-# For naming consistency
-
-full_data$country_name <- gsub('Slovak Republic', 'Slovakia', full_data$country_name)
-
-eumemberinfo$Name[eumemberinfo$Name == "Slovak Republic"] <- "Slovakia"
 
 eunames <- eumemberinfo %>%
    pull(Name)

@@ -18,6 +18,8 @@ data(wrld_simpl)
 
 full_data <- readRDS("full_data.rds")
 
+full_data$year <- as.numeric(full_data$year)
+
 mydata <- readRDS("mydata.rds")
 
 eunames <- readRDS("eunames.rds")
@@ -33,7 +35,7 @@ target_order <- wrld_simpl_data@data$NAME
 
 full_data <- full_data[match(target_order, full_data$country_name), ]
 
-# bins <- c(0,10,20,50,100,200,500,1000,5000,10000)
+bins <- c(0,10,20,50,100,200,500,1000,5000,10000,Inf)
 # pal <- colorBin("YlOrRd", domain = full_data$remittances_in_usd, bins = bins)
 
 #-----------------------------------------------------------------
@@ -50,7 +52,7 @@ ui <- fluidPage(
                       h1(tags$b("EU Remittance Flows"), align = "center"),
                       p(tags$em("Models of Remittance Inflows and Outflows over the last 40 years"),
                         align = "center"),
-                      p("Welcome! This webpage looks at remittance flows in the EU from the 1980s to present.",
+                      p("Welcome! This webpage looks at remittance flows in the EU from the 2000 to 2018.",
                         align = "center"),
                       h2(tags$b("Contact")),
                       p("Hi! I am Vivian Zhang, a first year at Harvard College studying Economics with a secondary in Government!"),
@@ -88,11 +90,10 @@ ui <- fluidPage(
                       # h4("This is a map of inflows."),
                       
                       sidebarPanel(
-                        sliderInput("year",label = strong("Year"),
-                                    min = 1980, max = 2018, value = 2000,
-                                    sep = ""),
+                        selectInput("year", label = "Year", 
+                                    choices = 2000:2018, selected = 2000),
                         mainPanel(
-                          leafletOutput("inflows")
+                          leafletOutput("inflows", width = 100, height = 400)
                         ))))))
                        # sliderInput("year_inflows", label = strong("Select Year"), min = 1980, max = 2018,
                                   #  value = 2000, sep = ""))),
@@ -204,6 +205,39 @@ server <- function(input, output){
     
     })
   
+  output$inflows <- renderLeaflet({
+    
+    x <- as.numeric(input$year)
+    
+    filtered_data <- full_data %>%
+      filter(year == x) %>%
+      select(remittances_in_usd)
+    
+    pal <- colorBin("YlOrRd", 
+             domain = filtered_data$remittances_in_usd,
+             bins = bins)
+    
+    pal_val <- full_data[full_data$year == x,]
+    
+    leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
+                                                      minZoom = 3,
+                                                      maxZoom = 6)) %>%
+      addProviderTiles("CartoDB") %>%
+      setView(30, 55, 3) %>%
+      setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70) %>%
+      addPolygons(weight = 2,
+                  opacity = 1,
+                  fillColor = ~pal(pal_val),
+                  fillOpacity = 0.7,
+                  color = "white",
+                  label = ~paste0("Country: ", 
+                                  wrld_simpl_data@data$NAME, ", ", 
+                                  "Total Remittances: $", 
+                                  round(filteredData$remittances_in_usd,0),
+                                  " Mln", sep=""))
+    
+  })
+  
   # subset<-reactive({full_data %>% filter(year %in% input$year)})
   
   # output$evicmap <- renderLeaflet({
@@ -228,74 +262,92 @@ server <- function(input, output){
   #     addLegend(pal = pal, values = pal_val)
   # })
   
-  output$inflows <- renderLeaflet({
-    x <- as.numeric(input$year)
-    
-    pal_val <- full_data %>%
-      filter(year == x)
-    
-    labels <- sprintf(
-      "<strong>%s</strong><br/>%d percent eviction rate",
-      wrld_simpl_data@data$NAME, pal_val$remittances_in_usd
-    ) %>%
-      lapply(htmltools::HTML)
-    
-    # bins <- c(0,10,20,50,100,200,500,1000,5000,10000)
-    pal <- colorNumeric("YlOrRd", domain = pal_val$remittances_in_usd)
-    
-    leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
-                                                      minZoom = 3,
-                                                      maxZoom = 6)) %>%
-      addProviderTiles("CartoDB") %>%
-      setView(30, 55, 3) %>%
-      addPolygons(weight = 2,
-                  opacity = 1,
-                  fillColor = ~pal(pal_val$remittances_in_usd),
-                  fillOpacity = 1,
-                  color = ~pal(pal_val$remittances_in_usd),
-                  label = ~paste0("Country: ", wrld_simpl_data@data$NAME, ", ",
-                                  "Total Remittances: $", 
-                                  round(pal_val$remittances_in_usd,0), 
-                                  " Mln", sep=""),
-                  labelOptions = labelOptions(
-                    style = list("font-weight" = "normal", padding = "3px 8px"),
-                    textsize = "12px",
-                    direction = "auto"
-                  ),
-                  highlight = highlightOptions(weight = 3, color = "white", bringToFront = TRUE)) %>%
-      addLegend(pal = pal, values = pal_val$remittances_in_usd, opacity = 0.7,
-                title = "Remittances in Millions of USD", position = "bottomright") %>%
-      setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70)})
   
-  # output$value <- renderPrint({ full_data$year })
+  # Filter full_data set based on inputs on slider.
+  
+  # filteredData <- reactive({
+  #   x <- as.numeric(input$mapvar)
+  #   full_data %>%
+  #     filter(year == x)
+  # })
+  
+  # Basemap creation
   
   # output$inflows <- renderLeaflet({
-  #   
-  #   full_data$year <- as.numeric(input$year_inflows)
   #   
   #   leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
   #                                                     minZoom = 3,
   #                                                     maxZoom = 6)) %>%
   #     addProviderTiles("CartoDB") %>%
   #     setView(30, 55, 3) %>%
+  #     setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70)
+  #   
+  # })
+  # 
+  # # Incremental changes to map performed in an observer.
+  # 
+  # observe({
+  #   
+  #   filteredData <- full_data %>%
+  #     filter(year == input$year)
+  #   
+  #   bins <- c(0,10,20,50,100,200,500,1000,5000,10000,Inf)
+  #   # pal <- colorBin("YlOrRd", domain = remittances_in_usd, bins = bins)
+  #   
+  #   # labels <- sprintf(
+  #   #   "<strong>%s</strong><br/>%d USD of remittance outflows",
+  #   #   wrld_simpl_data@data$NAME, filteredData()$remittances_in_usd) %>%
+  #   #   lapply(htmltools::HTML)
+  #   
+  #   leafletProxy("inflows", data = filteredData) %>%
+  #     clearPopups() %>%
+  #     clearShapes() %>%
   #     addPolygons(weight = 2,
   #                 opacity = 1,
-  #                 fillColor = ~pal(full_data$remittances_in_usd),
-  #                 fillOpacity = 1,
-  #                 color = "black",
-  #                 label = ~paste0("Country: ", wrld_simpl_data@data$NAME, ", ",
-  #                                 "Total Remittances: $", round(full_data$remittances_in_usd,0), " Mln", sep=""),
-  #                 labelOptions = labelOptions(
-  #                   style = list("font-weight" = "normal", padding = "3px 8px"),
-  #                   textsize = "12px",
-  #                   direction = "auto"
-  #                 ),
-  #                 highlight = highlightOptions(weight = 3, color = "white", bringToFront = TRUE)) %>%
-  #     addLegend(pal = pal, values = ~full_data$remittances_in_usd, opacity = 0.7,
-  #               title = "Remittances in Millions of USD", position = "bottomright") %>%
-  #     setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70)
+  #                 fillColor = ~colorBin("YlOrRd", 
+  #                                       domain = filtereData$remittances_in_usd,
+  #                                       bins = bins),
+  #                 fillOpacity = 0.7,
+  #                 color = "white",
+  #                 label = ~paste0("Country: ", 
+  #                                         wrld_simpl_data@data$NAME, ", ", 
+  #                                         "Total Remittances: $", 
+  #                                         round(filteredData$remittances_in_usd,0),
+  #                                         " Mln", sep=""))
   # })
-  
+  #   
+  #   # x <- as.numeric(input$mapvar)
+  #   # 
+  #   # # reactive({full_data %>% filter(year %in% input$year)})
+  #   # 
+  #   # pal_val <- full_data %>%
+  #   #   filter(year == x) %>%
+  #   #   pull(remittances_in_usd)
+  #   # 
+  #   # labels <- sprintf(
+  #   #   "<strong>%s</strong><br/>%d USD of remittance outflows",
+  #   #   wrld_simpl_data@data$NAME, pal_val) %>%
+  #   #   lapply(htmltools::HTML)
+  #   # 
+  #   # bins <- c(0,10,20,50,100,200,500,1000,5000,10000,Inf)
+  #   # pal <- colorBin("YlOrRd", domain = pal_val, bins = bins)
+  #   # 
+  #   # 
+  #   # 
+  #   # leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
+  #   #                                                   minZoom = 3,
+  #   #                                                   maxZoom = 6)) %>%
+  #   #   addProviderTiles("CartoDB") %>%
+  #   #   setView(30, 55, 3) %>%
+  #   #   addPolygons(weight = 2,
+  #   #               opacity = 1,
+  #   #               fillColor = ~pal(pal_val),
+  #   #               fillOpacity = 0.7,
+  #   #               color = "white",
+  #   #               label = labels) %>%
+  #   #   addLegend(pal = pal, values = ~pal_val, opacity = 0.7) %>%
+  #   #   setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70)
+  #   # })
 }
 
 shinyApp(ui = ui, server = server)
