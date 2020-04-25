@@ -219,7 +219,7 @@ server <- function(input, output){
     pal_val <- full_data %>% 
       filter(as.character(year) == input$year) %>%
       na.omit()
-    
+
     pal <- colorBin("viridis",
              domain = pal_val$remittances_in_usd,
              bins = bins)
@@ -236,11 +236,12 @@ server <- function(input, output){
                   opacity = 1,
                   color = "black",
                   fillColor = ~pal(pal_val$remittances_in_usd),
+                  # fillColor = ~pal(pal_val$remittances_in_usd),
                   fillOpacity = 1,
                   label = ~paste0("Country: ", 
                                   wrld_simpl_data@data$NAME, ", ", 
                                   "Total Remittances: $", 
-                                  pal_val$remittances_in_usd,
+                                  ~pal_val$remittances_in_usd,
                                   " Mln", sep=""),
                   highlight = highlightOptions(weight = 3, color = "white", 
                                                bringToFront = TRUE)) %>%
