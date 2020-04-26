@@ -58,6 +58,10 @@ eumemberinfo$Name[eumemberinfo$Name == "Slovak Republic"] <- "Slovakia"
 eunames <- eumemberinfo %>%
    pull(Name)
 
+mychoices <- eumemberinfo %>%
+  select(Name) %>%
+  arrange()
+
 wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames), ]
 
 target_order <- wrld_simpl_data@data$NAME
@@ -172,7 +176,7 @@ mydata <- full_data %>%
 
 saveRDS(object = full_data,file = "shiny/full_data.rds")
 
-saveRDS(object = mydata,file = "shiny/mydata.rds")
+saveRDS(object = mychoices,file = "shiny/mychoices.rds")
 
 saveRDS(object = eunames,file = "shiny/eunames.rds")
 

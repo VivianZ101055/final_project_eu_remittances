@@ -20,9 +20,9 @@ full_data <- readRDS("full_data.rds")
 
 full_data$year <- as.numeric(full_data$year)
 
-mydata <- readRDS("mydata.rds")
-
 eunames <- readRDS("eunames.rds")
+
+mychoices <- readRDS("mychoices.rds")
 
 # Considers only the polygons for the EU countries.
 
@@ -57,10 +57,13 @@ ui <- fluidPage(
              ),
 
              tabPanel("Graphs",
+                      titlePanel("TODO"),
                       sidebarLayout(
                         sidebarPanel(
-                          h3("Interactive Graphs"),
-                          p("To learn more about the remittance data, hover over points on the graph.")
+                          selectInput("mycountry", label = "Country",
+                                      choices = mychoices, selected = "Austria")
+                          # h3("Interactive Graphs"),
+                          # p("To learn more about the remittance data, hover over points on the graph.")
                         ),
                         mainPanel(
                           tabsetPanel(
@@ -111,13 +114,23 @@ server <- function(input, output){
          style = "display: block; margin-left: auto; margin-right:auto")
   }, deleteFile = FALSE
   )
+  
+  graph_react <- reactive({
+    
+    full_data %>% dplyr::filter(country_name == input$mycountry) %>%
+      na.omit()
+    
+  })
 
   output$distPlot <- renderPlotly({
-    p <- ggplot(mydata, aes(x = as.numeric(year), y = sum_remittance_usd)) +
+    
+    mydata <- graph_react()
+    
+    p <- ggplot(mydata, aes(x = as.numeric(year), y = remittances_in_usd)) +
       geom_line(color = "light blue") +
       geom_point(aes(text = paste0("Year: ", year, "\n",
                               "Total Remittances: $",
-                              round(sum_remittance_usd,0),
+                              round(remittances_in_usd,0),
                               " Mln", sep="")), color = "dark blue") +
       labs(title = "Total remittances flowing into the EU, by year",
            x = "Year",
@@ -127,16 +140,6 @@ server <- function(input, output){
                                     2016,2018),
                          labels = c("2000","2002","2004","2006","2008","2010",
                                     "2012","2014","2016","2018")) +
-      scale_y_continuous(limits = c(0, 150000),
-                         breaks = c(0, 10000, 20000, 30000,
-                                    40000, 50000, 60000,
-                                    70000, 80000, 90000,
-                                    100000, 110000, 120000, 130000,
-                                    140000, 150000),
-                         labels = c("0", "10000", "20000", "30000", "40000",
-                                    "50000", "60000", "70000", "80000",
-                                    "90000", "100000", "110000", "120000",
-                                    "130000", "140000", "150000")) +
       theme_classic()
 
     # Generates the plot with text hovering feature
