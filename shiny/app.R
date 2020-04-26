@@ -57,7 +57,9 @@ ui <- fluidPage(
              ),
 
              tabPanel("Graphs",
-                      titlePanel("TODO"),
+                      titlePanel(
+                        textOutput("graph_inflow_title")
+                      ),
                       sidebarLayout(
                         sidebarPanel(
                           selectInput("mycountry", label = "Country",
@@ -66,15 +68,8 @@ ui <- fluidPage(
                           # p("To learn more about the remittance data, hover over points on the graph.")
                         ),
                         mainPanel(
-                          tabsetPanel(
-                            tabPanel("Remittances in USD",
-                                     plotlyOutput("distPlot"))
-                            ),
-                          tabsetPanel(
-                            tabPanel("Remittances as a Percentage of GDP")
-                          ))
-                        )
-                      ),
+                          plotlyOutput("distPlot")
+                        ))),
 
              navbarMenu("Remittance Maps",
                         tabPanel("Inflows",
@@ -115,6 +110,13 @@ server <- function(input, output){
   }, deleteFile = FALSE
   )
   
+  #---------------------------------------------------------------------------
+  #------------Inflow map title-----------------------------------------------
+  
+  output$graph_inflow_title <- renderText({
+    paste("Yearly Remittance Flows in ", input$mycountry)
+  })
+  
   graph_react <- reactive({
     
     full_data %>% dplyr::filter(country_name == input$mycountry) %>%
@@ -132,7 +134,7 @@ server <- function(input, output){
                               "Total Remittances: $",
                               round(remittances_in_usd,0),
                               " Mln", sep="")), color = "dark blue") +
-      labs(title = "Total remittances flowing into the EU, by year",
+      labs(title = paste("Remittance Inflows:", mydata$country_name),
            x = "Year",
            y = "Total Remittances (in Millions of USD)") +
       scale_x_continuous(limits = c(2000, 2018),
