@@ -28,14 +28,7 @@ eunames <- readRDS("eunames.rds")
 
 wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames), ]
 
-# Reordering full_data to match natural order from world_simpl, our Large
-# Spatial Polygons Dataframe.
-
-# target_order <- wrld_simpl_data@data$NAME
-#   
-# full_data <- full_data[match(target_order, full_data$country_name), ]
-
-bins <- c(0,100,500,1000,3000,5000,7000,9000,Inf)
+bins <- c(0,100,500,1000,3000,5000,7000,10000,15000,25000,30000)
 
 #-----------------------------------------------------------------
 #--------------------------Shiny ui-------------------------------
@@ -66,7 +59,8 @@ ui <- fluidPage(
              tabPanel("Graphs",
                       sidebarLayout(
                         sidebarPanel(
-                          h3("Interactive Graphs")
+                          h3("Interactive Graphs"),
+                          p("To learn more about the remittance data, hover over points on the graph.")
                         ),
                         mainPanel(
                           tabsetPanel(
@@ -81,22 +75,29 @@ ui <- fluidPage(
 
              navbarMenu("Remittance Maps",
                         tabPanel("Inflows",
+                                 titlePanel(
+                                   textOutput("inflow_map_title")),
                                  sidebarLayout(sidebarPanel(
-                                   selectInput("myyearinflows", label = "Year",
-                                               choices = c(2000:2018), 
-                                               selected = 2010)),
-                                   mainPanel(leafletOutput("inflows", 
-                                                           width = 900, 
-                                                           height = 600)))),
+                                   sliderInput("myyearinflows", label = "Year",
+                                               min = 2000, max = 2018,
+                                               value = 2018)),
+                                   htmlOutput("inflow_map_description")),
+                                 mainPanel(leafletOutput("inflows", 
+                                                         width = 900, 
+                                                         height = 600))
+                                   ),
                         tabPanel("Outflows",
+                                 titlePanel(
+                                   textOutput("outflow_map_title")),
                                  sidebarLayout(sidebarPanel(
-                                   selectInput("myyearoutflows", label = "Year",
-                                               choices = c(2000:2018), 
-                                               selected = 2010)),
-                                   mainPanel(leafletOutput("outflows", 
-                                                           width = 900, 
-                                                           height = 600))))
-                        )))
+                                   sliderInput("myyearoutflows", label = "Year",
+                                               min = 2000, max = 2018,
+                                               value = 2018)),
+                                   htmlOutput("outflow_map_description")),
+                                 mainPanel(leafletOutput("outflows", 
+                                                         width = 900, 
+                                                         height = 600))
+                        ))))
 
 #-----------------------------------------------
 #--------------------Server---------------------
@@ -121,12 +122,11 @@ server <- function(input, output){
       labs(title = "Total remittances flowing into the EU, by year",
            x = "Year",
            y = "Total Remittances (in Millions of USD)") +
-      scale_x_continuous(limits = c(1980, 2018),
-                         breaks = c(1980, 1985, 1990, 1995, 2000, 2005, 2010,
-                                    2015),
-                         labels = c("1980", "1985", "1990", "1995",
-                                    "2000", "2005", "2010",
-                                    "2015")) +
+      scale_x_continuous(limits = c(2000, 2018),
+                         breaks = c(2000,2002,2004,2006,2008,2010,2012,2014,
+                                    2016,2018),
+                         labels = c("2000","2002","2004","2006","2008","2010",
+                                    "2012","2014","2016","2018")) +
       scale_y_continuous(limits = c(0, 150000),
                          breaks = c(0, 10000, 20000, 30000,
                                     40000, 50000, 60000,
@@ -144,7 +144,20 @@ server <- function(input, output){
     ggplotly(p, tooltip = "text")
 
     })
+  
+  #---------------------------------------------------------------------------
+  #------------Inflow map title-----------------------------------------------
 
+  output$inflow_map_title <- renderText({
+    paste("Total Amount of Remittance Inflows in ", input$myyearinflows)
+  })
+
+  #---------------------------------------------------------------------------
+  #------------Inflow map description-----------------------------------------
+  
+  output$inflow_map_description <- renderText({
+    HTML("<p><b>Description</b></br></p>
+         <p>Select a year, then hover over an individual country to learn about that country's quantity of remittance inflows. Please note that all values are in USD.</p>")})
   
   map_data_react <- reactive({
     
@@ -157,7 +170,7 @@ server <- function(input, output){
     
     pal_val <- map_data_react()
     
-    pal <- colorBin(palette = "YlOrRd", domain = pal_val$remittances_in_usd,
+    pal <- colorBin(palette = "viridis", domain = pal_val$remittances_in_usd,
                     bins = bins)
     
     leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
@@ -185,6 +198,21 @@ server <- function(input, output){
     
   })
   
+  #---------------------------------------------------------------------------
+  #------------Outflow map title----------------------------------------------
+  
+  output$outflow_map_title <- renderText({
+    paste("Total Amount of Remittance Outflows in ", input$myyearoutflows)
+  })
+  
+  #---------------------------------------------------------------------------
+  #------------Outflow map description----------------------------------------
+  
+  output$outflow_map_description <- renderText({
+    HTML("<p><b>Description</b></br></p>
+         <p>Select a year, then hover over an individual country to learn about that country's quantity of remittance outflows. Please note that all values are in USD.</p>")})
+  
+  
   map_data <- reactive({
     
     full_data %>% dplyr::filter(year == input$myyearoutflows) %>%
@@ -196,7 +224,7 @@ server <- function(input, output){
     
     pal_val <- map_data()
     
-    pal <- colorBin(palette = "YlOrRd", domain = pal_val$remittances_outflows,
+    pal <- colorBin(palette = "viridis", domain = pal_val$remittances_outflows,
                     bins = bins)
     
     leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
