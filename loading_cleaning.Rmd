@@ -29,6 +29,9 @@ data(wrld_simpl)
 
 ```{r}
 
+
+read.table(file = "shiny/data/migr_emi1ctz.tsv", sep = '\t', header = TRUE)
+
 ## PART ONE: DATA WRANGLING
 
 #---------------------------------------------------------------------

@@ -42,34 +42,72 @@ ui <- fluidPage(
                       imageOutput("global_remittance", width = "100%",
                                   height = "100%"),
                       h1(tags$b("EU Remittance Flows"), align = "center"),
-                      p(tags$em("Models of Remittance Inflows and Outflows over the last 40 years"),
+                      p(tags$em("Models of Remittance Inflows and Outflows over 
+                                the last 18 years"),
                         align = "center"),
-                      p("Welcome! This webpage looks at remittance flows in the EU from the 2000 to 2018.",
+                      p("Welcome! This webpage looks at remittance flows in the 
+                        EU from the 2000 to 2018.",
                         align = "center"),
-                      h2(tags$b("Contact")),
-                      p("Hi! I am Vivian Zhang, a first year at Harvard College studying Economics with a secondary in Government!"),
-                      p("You can reach me at vivianzhang@college.harvard.edu."),
-                      p("The code for this project can be accessed from",
-                        a(href="https://github.com/VivianZ101055", "my github repository.")),
-                      br(),
+                      p("I had written about remittances in small, developing 
+                      economies in the past. For this project, I wanted to 
+                      approach the topic of remittances from the perspective of 
+                      developed, stable economies in Europe. Here's an excerpt 
+                      from my article on remittances, published in the Harvard 
+                      Economics Review: "),
+                      p("`Worldwide, one in nine people are supported by 
+                        remittances, transfers of money from migrant workers 
+                        abroad to their families in native countries. 
+                        Pro-remittance arguments are undoubtedly strong. 
+                        Remittances are free of the repayment obligations that 
+                        are tied to capital flows and the political conditions 
+                        that come with foreign aid. Unlike 
+                        government-to-government aid, remittances do not require 
+                        potentially corrupt regimes to serve as intermediaries; 
+                        there is little bureaucracy and three quarters of 
+                        remittances go directly towards food, rent, education, 
+                        and other essentials. The majority of remittances are 
+                        sent to rural areas, where leftover money is injected 
+                        into savings accounts or used in investments to 
+                        stimulate the local economy. In many developing 
+                        countries, the banking system is known for under-serving 
+                        the poor; remittances are a source of stable income 
+                        that decreases financial stress. In terms of the 
+                        quantity of money transferred, remittance flows 
+                        represent three times more than foreign aid and are far 
+                        more stable in the long run than foreign direct 
+                        investment.'"),
+                      h4(tags$b("About Me")),
+                      p("Hi! I am Vivian Zhang, a first year at Harvard College 
+                        studying Economics with a secondary in Computer Science! 
+                        You can reach me at vivianzhang@college.harvard.edu. 
+                        The code for this project can be accessed from",
+                        a(href="https://github.com/VivianZ101055", "my github 
+                          repository.")),
                       hr("Acknowledgements:"),
-                      p("Thank you to Preceptor David Kane and all the members of GOV 1005 for introducing me to data science and helping me on this project!")
+                      p("Thank you to Preceptor David Kane and all the members 
+                        of GOV 1005 for introducing me to data science and 
+                        helping me on this project! All of my data came from the 
+                        World Bank and the World Trade Organization.")
              ),
 
              tabPanel("Graphs",
                       titlePanel(
-                        textOutput("graph_inflow_title")
+                        textOutput("graph_title")
                       ),
                       sidebarLayout(
                         sidebarPanel(
                           selectInput("mycountry", label = "Country",
-                                      choices = mychoices, selected = "Austria")
-                          # h3("Interactive Graphs"),
-                          # p("To learn more about the remittance data, hover over points on the graph.")
+                                      choices = mychoices, selected = "Austria"),
+                          htmlOutput("graph_description")
                         ),
                         mainPanel(
-                          plotlyOutput("distPlot")
-                        ))),
+                          tabsetPanel(
+                            tabPanel("Country Inflows",
+                                      plotlyOutput("distPlot"))),
+                          tabsetPanel(
+                            tabPanel("Country Outflows",
+                                      plotlyOutput("distOutflows")))
+                          ))),
 
              navbarMenu("Remittance Maps",
                         tabPanel("Inflows",
@@ -95,7 +133,14 @@ ui <- fluidPage(
                                  mainPanel(leafletOutput("outflows", 
                                                          width = 900, 
                                                          height = 600))
-                        ))))
+                        )),
+             tabPanel("Regressions",
+                      h1("Modeling for Explanation",
+                         align = "center"),
+                      p(tags$em("Visualizing the Correlation Between Bilateral 
+                                 Trade and Remittance Flows"),
+                        align = "center"))
+             ))
 
 #-----------------------------------------------
 #--------------------Server---------------------
@@ -113,9 +158,15 @@ server <- function(input, output){
   #---------------------------------------------------------------------------
   #------------Inflow map title-----------------------------------------------
   
-  output$graph_inflow_title <- renderText({
-    paste("Yearly Remittance Flows in ", input$mycountry)
+  output$graph_title <- renderText({
+    paste("Visualizing Remittance Inflows and Outflows by Country")
   })
+  
+  output$graph_description <- renderText({
+    HTML("<p><b>Description</b></br></p>
+         <p>In the dropdown menu, select an EU member state. Hover over points 
+         on the graphs to see inflow and outflow quantities (both measured in 
+         USD) for each year, from 2000 to 2018.</p>")})
   
   graph_react <- reactive({
     
@@ -149,6 +200,32 @@ server <- function(input, output){
     ggplotly(p, tooltip = "text")
 
     })
+  
+  output$distOutflows <- renderPlotly({
+    
+    mydata <- graph_react()
+    
+    p <- ggplot(mydata, aes(x = as.numeric(year), y = remittances_outflows)) +
+      geom_line(color = "light blue") +
+      geom_point(aes(text = paste0("Year: ", year, "\n",
+                                   "Total Remittances: $",
+                                   round(remittances_outflows,0),
+                                   " Mln", sep="")), color = "dark blue") +
+      labs(title = paste("Remittance Outflows:", mydata$country_name),
+           x = "Year",
+           y = "Total Remittances (in Millions of USD)") +
+      scale_x_continuous(limits = c(2000, 2018),
+                         breaks = c(2000,2002,2004,2006,2008,2010,2012,2014,
+                                    2016,2018),
+                         labels = c("2000","2002","2004","2006","2008","2010",
+                                    "2012","2014","2016","2018")) +
+      theme_classic()
+    
+    # Generates the plot with text hovering feature
+    
+    ggplotly(p, tooltip = "text")
+    
+  })
   
   #---------------------------------------------------------------------------
   #------------Inflow map title-----------------------------------------------
