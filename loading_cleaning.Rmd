@@ -147,9 +147,6 @@ mydata <- full_data %>%
   ungroup() %>%
   mutate(year = as.numeric(as.character(year)))
 
-# full_data <- full_data %>%
-#   filter(year == 2000)
-
 eunames <- eumemberinfo %>%
    pull(Name)
 # 
