@@ -31,9 +31,9 @@ wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames), ]
 # Reordering full_data to match natural order from world_simpl, our Large
 # Spatial Polygons Dataframe.
 
-target_order <- wrld_simpl_data@data$NAME
-
-full_data <- full_data[match(target_order, full_data$country_name), ]
+# target_order <- wrld_simpl_data@data$NAME
+#   
+# full_data <- full_data[match(target_order, full_data$country_name), ]
 
 bins <- c(0,10,20,50,100,200,500,1000,5000,10000,Inf)
 # pal <- colorBin("YlOrRd", domain = full_data$remittances_in_usd, bins = bins)
