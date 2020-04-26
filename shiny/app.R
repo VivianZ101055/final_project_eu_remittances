@@ -223,28 +223,8 @@ server <- function(input, output){
     
     pal_val <- map_data_react()
     
-    # x <- as.character(input$myyear)
-    # #output$debug <- renderText({print(input$year)})
-    # #output$debug2 <- renderText({print(x)})
-    # 
-    # 
-    # # pal_val <- reactive({
-    # #   full_data %>%
-    # #     dplyr::filter(year == input$myyear)
-    # # })
-    # 
-    # pal_val <- full_data %>%
-    #   filter(year == input$myyear) %>%
-    #   na.omit()
-    
-    output$debug <- renderText({print(pal_val$year)})
-    
-    # pal <- colorBin("viridis",
-    #                 # domain = full_data$remittances_in_usd,
-    #                 domain = pal_val$remittances_in_usd,
-    #                 bins = bins)
-    
-    pal <- colorNumeric(palette = "Blues", domain = pal_val$remittances_in_usd)
+    pal <- colorBin(palette = "viridis", domain = pal_val$remittances_in_usd,
+                    bins = bins)
     
     leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
                                                       minZoom = 3.2,
@@ -252,19 +232,16 @@ server <- function(input, output){
       addProviderTiles("CartoDB") %>%
       setView(30, 55, 3) %>%
       setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70) %>%
-      # clearPopups() %>%
-      # clearShapes() %>%
       addPolygons(
                   weight = 2,
                   opacity = 1,
                   color = "black",
-                  # fillColor = ~pal(full_data$remittances_in_usd),
                   fillColor = ~pal(as.numeric(pal_val$remittances_in_usd)),
                   fillOpacity = 1,
                   label = ~paste0("Country: ", 
                                   wrld_simpl_data@data$NAME, ", ", 
                                   "Total Remittances: $", 
-                                  pal_val$remittances_in_usd,
+                                  round(pal_val$remittances_in_usd,0),
                                   " Mln", sep=""),
                   highlight = highlightOptions(weight = 3, color = "white", 
                                                bringToFront = TRUE)) %>%
