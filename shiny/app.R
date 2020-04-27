@@ -30,6 +30,26 @@ wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames), ]
 
 bins <- c(0,100,500,1000,3000,5000,7000,10000,15000,25000,30000)
 
+regression <- lm(log_remittances_percent_gdp ~ log_gdp, data = full_data)
+
+my_table <- regression %>%
+  tidy(conf.int = TRUE) %>%
+  select(term, estimate, conf.low, conf.high) %>%
+  mutate_at(vars(estimate, conf.low, conf.high),
+            list(~ round(., 2))) %>%
+  gt() %>%
+  tab_header(title = "Relationship Between GDP and Reliance on Remittance Inflows") %>%
+  cols_label(
+    term = "Variable",
+    estimate = "Estimate",
+    conf.low = "Lower bound",
+    conf.high = "Upper bound") %>%
+  tab_spanner(
+    label = "Both GDP and Remittance Inflow as a Percentage of GDP are logged",
+    columns = vars(
+      term, estimate, conf.low, conf.high
+    ))
+
 #-----------------------------------------------------------------
 #--------------------------Shiny ui-------------------------------
 
@@ -139,7 +159,44 @@ ui <- fluidPage(
                          align = "center"),
                       p(tags$em("Visualizing the Correlation Between Bilateral 
                                  Trade and Remittance Flows"),
-                        align = "center"))
+                        align = "center"),
+                      sidebarLayout(
+                        sidebarPanel(
+                          h4("Description"),
+                          p("Regression Model 1 shows the general 
+                            relationship between the size of the economy and 
+                            reliance on remittances, based on data from 2000 to 
+                            2018 in EU member states. Since this the data does 
+                            not fit a linear model, I used a log scale on the 
+                            GDP variable. Smaller economies tend to have higher 
+                            reliance on remittances. When we get to medium 
+                            economies, the correlation between remittance inflows 
+                            and GDP becomes noticeably less strong. There is less 
+                            of a jump in correlation when we move from medium to 
+                            large economies than when we move from small to medium 
+                            economies."),
+                          p("Regression Model 2 uses the log scale on both the 
+                            GDP and remittance inflow as a percentage of GDP 
+                            variables. It tells us that countries with larger 
+                            GDPs also tend to have larger inflows of remittances.
+                            If we look at the Table to Understand Regression 
+                            Model 2, we can say that a country with a 1% higher 
+                            GDP tends to have a 0.36% smaller value for 
+                            remittance inflows as a percentage of GDP."),
+                          p("Obviously, there are many confounding variables and 
+                            I am not making any causal claims in my project.")
+                          ),
+                        mainPanel(
+                          mainPanel(
+                            tabsetPanel(
+                              tabPanel("Regression Method 1",
+                                       plotlyOutput("inflow_outflow"))),
+                            tabsetPanel(
+                              tabPanel("Regression Method 2",
+                                       plotlyOutput("log_plot"))),
+                            tabsetPanel(
+                              tabPanel("Table to understand Regression Method 2",
+                                       gt_output(outputId = "table")))))))
              ))
 
 #-----------------------------------------------
@@ -334,6 +391,38 @@ server <- function(input, output){
                 position = "bottomright")
     
   })
+  
+  output$inflow_outflow <- renderPlotly({
+    
+    myplot1 <- ggplot(full_data, aes(x = gdp, y = remittances_percent_gdp)) +
+      geom_point(color = "blue", size = 0.5) + 
+      geom_line(color = "red", data = predicted, 
+                aes(x = gdp, y = remittances_percent_pred)) +
+      labs(title = "Relationship Between the Size of the Economy and \n Reliance on Remittances",
+           subtitle = "Observing the Correlation Between the Remittance Inflows and GDP",
+           x = "GDP in Billions of US Dollars",
+           y = "Remittance Inflow as a Percentage of GDP") +
+      theme_classic()
+    
+  })
+  
+  output$log_plot <- renderPlotly({
+    myplot2 <- ggplot(full_data, aes(x = log_gdp, y = log_remittances_percent_gdp)) +
+      geom_point(color = "blue", size = 0.5) + 
+      geom_smooth(method = "glm", se = FALSE, color = "black") +
+      labs(title = "Relationship Between the Size of the Economy and \n Reliance on Remittances",
+           subtitle = "Observing the Correlation Between the Remittance Inflows and GDP",
+           x = "Log of GDP in Billions of USD",
+           y = "Log of Remittance Inflow as a Percentage of GDP") +
+      theme_classic()
+  })
+  
+  output$table <- render_gt(
+    expr = my_table,
+    height = px(600),
+    width = px(700)
+  )
+  
   
 }
 

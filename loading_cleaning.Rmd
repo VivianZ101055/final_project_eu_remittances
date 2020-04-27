@@ -21,6 +21,8 @@ library(leaflet)
 library(sp)
 library(maptools)
 library(maps)
+library(gt)
+library(broom)
 library(tidyverse)
 
 data(wrld_simpl)
@@ -162,17 +164,20 @@ mydata <- full_data %>%
   summarize(sum_remittance_usd = sum(remittances_in_usd)) %>%
   ungroup() %>%
   mutate(year = as.numeric(as.character(year)))
-# 
-# # Considers only the polygons for the EU countries.
-# 
-# wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames), ]
-# # 
-# # # Reordering full_data to match natural order from world_simpl, our Large
-# # # Spatial Polygons Dataframe.
-# # 
-# target_order <- wrld_simpl_data@data$NAME
-# 
-# full_data <- full_data[match(target_order, full_data$country_name), ]
+
+full_data <- full_data %>% 
+  mutate(gdp = 100 * remittances_in_usd / remittances_percent_gdp / 100000)
+
+gdp_on_percent <- rstanarm::stan_glm(remittances_percent_gdp ~ gdp, data = full_data, refresh = 0)
+
+full_data <- full_data %>% 
+  filter(!is.na(remittances_in_usd), !is.na(remittances_percent_gdp)) %>% 
+  mutate(gdp = 100 * remittances_in_usd / remittances_percent_gdp / 100000) %>%
+  mutate(log_remittances_percent_gdp = log(remittances_percent_gdp), log_gdp = log(gdp))
+
+gdp_on_percent <- lm(remittances_percent_gdp ~ log(gdp), data = full_data)
+
+predicted <- data.frame(remittances_percent_pred = predict(gdp_on_percent, full_data), gdp = full_data$gdp)
 
 saveRDS(object = full_data,file = "shiny/full_data.rds")
 
