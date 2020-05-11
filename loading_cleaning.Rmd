@@ -42,13 +42,21 @@ eumemberinfo <- read_html('https://en.wikipedia.org/wiki/Member_state_of_the_Eur
 
 eumemberinfo <- eumemberinfo[[1]]
 
-# Removing Wikipedia annotations
-
-eumemberinfo$Name <- str_remove_all(eumemberinfo$Name, "\\[.*\\]")
-
 # Select only the first four numbers to get the accession year
 
 eumemberinfo$Accession <- substr(eumemberinfo$Accession, 0, 4)
+
+# Add the United Kingdom
+
+eumemberinfo <- rbind(eumemberinfo, c("United Kingdom", 1990))
+
+# Only interested in the first two columns
+
+eumemberinfo <- eumemberinfo[,c(1:2)]
+
+# Removing Wikipedia annotations
+
+eumemberinfo$Name <- str_remove_all(eumemberinfo$Name, "\\[.*\\]")
 
 # Changing the names because Eastern European countries are labeled
 # differently on the two datasets
@@ -109,8 +117,8 @@ full_data <- usd_inflows %>%
   rename(remittances_in_usd = value) %>%
   clean_names %>%
   filter(country_name %in% name$sender)
-
-full_data <- full_data[, -c(4:13)]
+# 
+# full_data <- full_data[, -c(4:13)]
 
 # Load remittances as percentage of GDP for a given country
 
@@ -134,7 +142,7 @@ percent_gdp <- percent_gdp[,-c(2:45)]
 
 full_data <- full_data %>%
   left_join(percent_gdp, by = c("country_name"="country_name", "year"="year"), suffix = c("_usd", "_gdp")) %>%
-  select(country_name, year, remittances_in_usd, remittances_percent_gdp)
+  select(country_name, accession, year, remittances_in_usd, remittances_percent_gdp)
 
 remittance_outflows <- read_excel("shiny/data/remittance_outflow_april2020.xlsx", skip = 0)
 
@@ -154,13 +162,13 @@ remittance_outflows <- remittance_outflows[,-c(2:22)]
 full_data <- full_data %>%
   left_join(remittance_outflows, by = c("country_name"="country_name", "year"="year")) %>%
   rename(remittances_outflows = value) %>%
-  select(country_name, year, remittances_in_usd, remittances_percent_gdp, remittances_outflows)
+  select(country_name, accession, year, remittances_in_usd, remittances_percent_gdp, remittances_outflows)
 
 # Setup for ggplot of Remittances in USD
 
 mydata <- full_data %>%
   na.omit %>%
-  group_by(year) %>%
+  group_by(year,accession) %>%
   summarize(sum_remittance_usd = sum(remittances_in_usd)) %>%
   ungroup() %>%
   mutate(year = as.numeric(as.character(year)))

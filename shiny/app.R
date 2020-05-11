@@ -11,6 +11,8 @@ library(leaflet)
 library(sp)
 library(maptools)
 library(maps)
+library(gt)
+library(broom)
 library(base)
 library(tidyverse)
 
@@ -19,6 +21,20 @@ data(wrld_simpl)
 full_data <- readRDS("full_data.rds")
 
 full_data$year <- as.numeric(full_data$year)
+
+# full_data <- full_data %>% 
+#   mutate(gdp = 100 * remittances_in_usd / remittances_percent_gdp / 100000)
+
+# gdp_on_percent <- rstanarm::stan_glm(remittances_percent_gdp ~ gdp, data = full_data, refresh = 0)
+
+full_data <- full_data %>% 
+  filter(!is.na(remittances_in_usd), !is.na(remittances_percent_gdp)) %>% 
+  mutate(gdp = 100 * remittances_in_usd / remittances_percent_gdp / 100000) %>%
+  mutate(log_remittances_percent_gdp = log(remittances_percent_gdp), log_gdp = log(gdp))
+
+gdp_on_percent <- lm(remittances_percent_gdp ~ log_gdp, data = full_data)
+
+predicted <- data.frame(remittances_percent_pred = predict(gdp_on_percent, full_data), gdp = full_data$gdp)
 
 eunames <- readRDS("eunames.rds")
 
@@ -57,63 +73,25 @@ ui <- fluidPage(
   theme = shinytheme("flatly"),
   
   navbarPage(tags$b("EU Remittance Flows"),
-             
-             tabPanel("About",
-                      imageOutput("global_remittance", width = "100%",
-                                  height = "100%"),
-                      h1(tags$b("EU Remittance Flows"), align = "center"),
-                      p(tags$em("Models of Remittance Inflows and Outflows over 
+             tabPanel("Flows",
+                      h1("European Union Remittance Flows",
+                         align = "center"),
+                      h4(tags$em("Models of Remittance Inflows and Outflows over 
                                 the last 18 years"),
                         align = "center"),
-                      p("Welcome! This webpage looks at remittance flows in the 
-                        EU from the 2000 to 2018.",
-                        align = "center"),
-                      p("I had written about remittances in small, developing 
-                      economies in the past. For this project, I wanted to 
-                      approach the topic of remittances from the perspective of 
-                      developed, stable economies in Europe. Here's an excerpt 
-                      from my article on remittances, published in the Harvard 
-                      Economics Review: "),
-                      p("`Worldwide, one in nine people are supported by 
-                        remittances, transfers of money from migrant workers 
-                        abroad to their families in native countries. 
-                        Pro-remittance arguments are undoubtedly strong. 
-                        Remittances are free of the repayment obligations that 
-                        are tied to capital flows and the political conditions 
-                        that come with foreign aid. Unlike 
-                        government-to-government aid, remittances do not require 
-                        potentially corrupt regimes to serve as intermediaries; 
-                        there is little bureaucracy and three quarters of 
-                        remittances go directly towards food, rent, education, 
-                        and other essentials. The majority of remittances are 
-                        sent to rural areas, where leftover money is injected 
-                        into savings accounts or used in investments to 
-                        stimulate the local economy. In many developing 
-                        countries, the banking system is known for under-serving 
-                        the poor; remittances are a source of stable income 
-                        that decreases financial stress. In terms of the 
-                        quantity of money transferred, remittance flows 
-                        represent three times more than foreign aid and are far 
-                        more stable in the long run than foreign direct 
-                        investment.'"),
-                      h4(tags$b("About Me")),
-                      p("Hi! I am Vivian Zhang, a first year at Harvard College 
-                        studying Economics with a secondary in Computer Science! 
-                        You can reach me at vivianzhang@college.harvard.edu. 
-                        The code for this project can be accessed from",
-                        a(href="https://github.com/VivianZ101055", "my github 
-                          repository.")),
-                      hr("Acknowledgements:"),
-                      p("Thank you to Preceptor David Kane and all the members 
-                        of GOV 1005 for introducing me to data science and 
-                        helping me on this project! All of my data came from the 
-                        World Bank and the World Trade Organization.")
-             ),
-
-             tabPanel("Graphs",
-                      titlePanel(
-                        textOutput("graph_title")
-                      ),
+                      br(),
+                      p("Remittances are transfers of money from migrant 
+                      workers, generally to their home countries. According to
+                      the UN, 1/9 people around the world are to some extent 
+                      supported by remittances. Remittance trends in Europe are 
+                      particularly interesting from 2000-2018. During this period,
+                      the divide between Eastern and Western Europe became smaller. 
+                      The European Union became a more integrated supranational 
+                      organization and had to deal with the financial crisis of 2008.
+                      This webpage is a visualization tool to compare remittance
+                      inflows and outflows of EU member states during this eventful
+                      period of 18 years."),
+                      br(),
                       sidebarLayout(
                         sidebarPanel(
                           selectInput("mycountry", label = "Country",
@@ -124,6 +102,7 @@ ui <- fluidPage(
                           tabsetPanel(
                             tabPanel("Country Inflows",
                                       plotlyOutput("distPlot"))),
+                          br(),
                           tabsetPanel(
                             tabPanel("Country Outflows",
                                       plotlyOutput("distOutflows")))
@@ -136,7 +115,7 @@ ui <- fluidPage(
                                  sidebarLayout(sidebarPanel(
                                    sliderInput("myyearinflows", label = "Year",
                                                min = 2000, max = 2018,
-                                               value = 2018)),
+                                               value = 2018, sep = "")),
                                    htmlOutput("inflow_map_description")),
                                  mainPanel(leafletOutput("inflows", 
                                                          width = 900, 
@@ -148,7 +127,7 @@ ui <- fluidPage(
                                  sidebarLayout(sidebarPanel(
                                    sliderInput("myyearoutflows", label = "Year",
                                                min = 2000, max = 2018,
-                                               value = 2018)),
+                                               value = 2018, sep = "")),
                                    htmlOutput("outflow_map_description")),
                                  mainPanel(leafletOutput("outflows", 
                                                          width = 900, 
@@ -190,14 +169,42 @@ ui <- fluidPage(
                           mainPanel(
                             tabsetPanel(
                               tabPanel("Regression Method 1",
-                                       plotlyOutput("inflow_outflow"))),
+                                       plotlyOutput("inflow_outflow"),
+                                       br())),
                             tabsetPanel(
                               tabPanel("Regression Method 2",
-                                       plotlyOutput("log_plot"))),
+                                       plotlyOutput("log_plot"),
+                                       br())),
                             tabsetPanel(
                               tabPanel("Table to understand Regression Method 2",
-                                       gt_output(outputId = "table")))))))
-             ))
+                                       gt_output(outputId = "table"))))))),
+             tabPanel("About",
+                      imageOutput("global_remittance", width = "100%",
+                                  height = "100%"),
+                      h1(tags$b("EU Remittance Flows"), align = "center"),
+                      p(tags$em("Models of Remittance Inflows and Outflows over 
+                                the last 18 years"),
+                        align = "center"),
+                      h4(tags$b("About Me")),
+                      p("Hi! I am Vivian Zhang, a first year at Harvard College 
+                        studying Economics with a secondary in Computer Science! 
+                        You can reach me at vivianzhang@college.harvard.edu. 
+                        The code for this project can be accessed from",
+                        a(href="https://github.com/VivianZ101055", "my github 
+                          repository.")),
+                      h4(tags$b("Data Source")),
+                      p("My data came from the World Bank's Remittance Data
+                        sets, found",
+                        a(href="https://www.worldbank.org/en/topic/migrationremittancesdiasporaissues/brief/migration-remittances-data", 
+                          "here.")),
+                      p("Some of my data also came from the World Bank Open
+                        Data website, found",
+                        a(href = "https://data.worldbank.org/", "here.")),
+                      h4(tags$b("Acknowledgements:")),
+                      p("Thank you to Preceptor David Kane, my Teaching Fellow
+                      (June Hwang), and all the members of GOV 1005 for 
+                      introducing me to data science and and R.")
+             )))
 
 #-----------------------------------------------
 #--------------------Server---------------------
@@ -215,15 +222,17 @@ server <- function(input, output){
   #---------------------------------------------------------------------------
   #------------Inflow map title-----------------------------------------------
   
-  output$graph_title <- renderText({
-    paste("Visualizing Remittance Inflows and Outflows by Country")
-  })
-  
+  # output$graph_title <- renderText({
+  #   paste("Visualizing Remittance Inflows and Outflows by Country")
+  # })
+  # 
   output$graph_description <- renderText({
     HTML("<p><b>Description</b></br></p>
-         <p>In the dropdown menu, select an EU member state. Hover over points 
-         on the graphs to see inflow and outflow quantities (both measured in 
-         USD) for each year, from 2000 to 2018.</p>")})
+         <p>In the dropdown menu, select a country. Hover over points 
+         on the graphs to see inflow and outflow quantities. A vertical red line 
+         represents the year the country joined the European Union as a member 
+         state. If the graph does not contain a vertical line, the state joined 
+         the EU prior to the year 2000.</p>")})
   
   graph_react <- reactive({
     
@@ -242,9 +251,11 @@ server <- function(input, output){
                               "Total Remittances: $",
                               round(remittances_in_usd,0),
                               " Mln", sep="")), color = "dark blue") +
+      geom_vline(xintercept = as.numeric(mydata$accession), color = "red") +
       labs(title = paste("Remittance Inflows:", mydata$country_name),
            x = "Year",
-           y = "Total Remittances (in Millions of USD)") +
+           y = "Total Remittances (in Millions of USD)",
+           caption = "Footnote") +
       scale_x_continuous(limits = c(2000, 2018),
                          breaks = c(2000,2002,2004,2006,2008,2010,2012,2014,
                                     2016,2018),
@@ -268,6 +279,7 @@ server <- function(input, output){
                                    "Total Remittances: $",
                                    round(remittances_outflows,0),
                                    " Mln", sep="")), color = "dark blue") +
+      geom_vline(xintercept = as.numeric(mydata$accession), color = "red") +
       labs(title = paste("Remittance Outflows:", mydata$country_name),
            x = "Year",
            y = "Total Remittances (in Millions of USD)") +
@@ -296,11 +308,15 @@ server <- function(input, output){
   
   output$inflow_map_description <- renderText({
     HTML("<p><b>Description</b></br></p>
-         <p>Select a year, then hover over an individual country to learn about that country's quantity of remittance inflows. Please note that all values are in USD.</p>")})
+         <p>Select a year, then hover over an individual country to learn about 
+         that country's quantity of remittance inflows. Please note that all 
+         values are in USD. I deliberately kept the currency in USD, since the dataset
+         did not specify the rates the World Bank used to convert rates from
+         Euros and other European currencies to USD.</p>")})
   
   map_data_react <- reactive({
     
-    full_data %>% dplyr::filter(year == input$myyearinflows) %>%
+    full_data %>% filter(year == input$myyearinflows) %>%
       na.omit()
     
   })
@@ -313,7 +329,7 @@ server <- function(input, output){
                     bins = bins)
     
     leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
-                                                      minZoom = 3.2,
+                                                      minZoom = 3.48,
                                                       maxZoom = 6)) %>%
       addProviderTiles("CartoDB") %>%
       setView(30, 55, 3) %>%
@@ -332,7 +348,7 @@ server <- function(input, output){
                   highlight = highlightOptions(weight = 3, color = "white", 
                                                bringToFront = TRUE)) %>%
       addLegend(pal = pal, values = ~full_data$remittances_in_usd, opacity = 0.7,
-                title = "Remittances in Millions of USD", 
+                title = "Remittances in Millions of USD",
                 position = "bottomright")
     
   })
@@ -353,21 +369,17 @@ server <- function(input, output){
   
   
   map_data <- reactive({
-    
     full_data %>% dplyr::filter(year == input$myyearoutflows) %>%
       na.omit()
-    
   })
   
   output$outflows <- renderLeaflet({
-    
     pal_val <- map_data()
-    
     pal <- colorBin(palette = "viridis", domain = pal_val$remittances_outflows,
                     bins = bins)
-    
+
     leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
-                                                      minZoom = 3.2,
+                                                      minZoom = 3.45,
                                                       maxZoom = 6)) %>%
       addProviderTiles("CartoDB") %>%
       setView(30, 55, 3) %>%
@@ -385,9 +397,9 @@ server <- function(input, output){
                         " Mln", sep=""),
         highlight = highlightOptions(weight = 3, color = "white", 
                                      bringToFront = TRUE)) %>%
-      addLegend(pal = pal, values = ~full_data$remittances_outflows, 
+      addLegend(pal = pal, values = ~full_data$remittances_outflows,
                 opacity = 0.7,
-                title = "Remittances in Millions of USD", 
+                title = "Remittances in Millions of USD",
                 position = "bottomright")
     
   })
@@ -408,7 +420,7 @@ server <- function(input, output){
   
   output$log_plot <- renderPlotly({
     myplot2 <- ggplot(full_data, aes(x = log_gdp, y = log_remittances_percent_gdp)) +
-      geom_point(color = "blue", size = 0.5) + 
+      geom_point(color = "blue", size = 0.5) +
       geom_smooth(method = "glm", se = FALSE, color = "black") +
       labs(title = "Relationship Between the Size of the Economy and \n Reliance on Remittances",
            subtitle = "Observing the Correlation Between the Remittance Inflows and GDP",
