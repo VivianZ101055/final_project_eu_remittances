@@ -31,7 +31,8 @@ data(wrld_simpl)
 
 ```{r}
 
-## PART ONE: DATA WRANGLING
+# In this Rmd document, I clean all my data. The app.R script is where I
+# turn everything into a shiny app, create my maps/plots, etc.
 
 #---------------------------------------------------------------------
 #----------------------EU Facts Scraped from Online-------------------
@@ -65,6 +66,8 @@ eumemberinfo$Name[eumemberinfo$Name == "Czechia"] <- "Czech Republic"
 
 eumemberinfo$Name[eumemberinfo$Name == "Slovak Republic"] <- "Slovakia"
 
+# Getting a list of eunames by pulling from the Name column
+
 eunames <- eumemberinfo %>%
    pull(Name)
 
@@ -72,9 +75,14 @@ mychoices <- eumemberinfo %>%
   select(Name) %>%
   arrange()
 
+# Filtering wrld_simpl for just EU member states
+
 wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames), ]
 
 target_order <- wrld_simpl_data@data$NAME
+
+# Reordering my eumemberinfo dataframe to match wrld_simpl_data
+# Prevents countries from being mislabeled
 
 eumemberinfo <- eumemberinfo[match(target_order, eumemberinfo$Name), ]
 
@@ -90,11 +98,7 @@ names(name) <- c("sender")
 
 usd_inflows <- read_excel("shiny/data/april2020_remittanceinflows.xlsx", skip = 0)
 
-# Trying to get rid of the x in front of the data
-# Filter to only show between 2000 to present
-# Repeatedly getting the error that argument "pattern" is missing, with no
-# default
-# Convert USD to Euros - maybe later
+# Pivot longer to have an observation for each year
 
 usd_inflows <- usd_inflows %>%
   pivot_longer(
@@ -105,27 +109,33 @@ usd_inflows <- usd_inflows %>%
   clean_names() %>%
   rename("country_name" = migrant_remittance_inflows_us_million)
 
+# Deleting unnecessary columns
+
 usd_inflows <- usd_inflows[,-c(2:23)]
 
-# join this with the eumemberinfo to only look at member states
+# Change mismatched name
 
 usd_inflows$country_name <- gsub('Slovak Republic', 'Slovakia',
                                usd_inflows$country_name)
+
+# Join data into larger full_data dataframe
 
 full_data <- usd_inflows %>%
   right_join(eumemberinfo, by = c("country_name" = "Name")) %>%
   rename(remittances_in_usd = value) %>%
   clean_names %>%
   filter(country_name %in% name$sender)
-# 
-# full_data <- full_data[, -c(4:13)]
 
 # Load remittances as percentage of GDP for a given country
 
 percent_gdp <- read_excel("shiny/data/remittance_percentgdp.xls", skip = 2)
 
+# Fixing naming differences before merging data
+
 percent_gdp$`Country Name` <- gsub('Slovak Republic', 'Slovakia',
                                percent_gdp$`Country Name`)
+
+# Pivoting longer again for annual observation
 
 percent_gdp <- percent_gdp %>%
   pivot_longer(
@@ -136,6 +146,8 @@ percent_gdp <- percent_gdp %>%
   clean_names %>%
   filter(country_name %in% name$sender)
 
+# Deleting unnecessary columns
+
 percent_gdp <- percent_gdp[,-c(2:45)]
 
 # Join this with the previous data and select only the relevant columns
@@ -144,9 +156,15 @@ full_data <- full_data %>%
   left_join(percent_gdp, by = c("country_name"="country_name", "year"="year"), suffix = c("_usd", "_gdp")) %>%
   select(country_name, accession, year, remittances_in_usd, remittances_percent_gdp)
 
+# Loading remittance outflow data
+
 remittance_outflows <- read_excel("shiny/data/remittance_outflow_april2020.xlsx", skip = 0)
 
+# Fixing unmatched names
+
 remittance_outflows$`Migrant remittance outflows (US$ million)` <- gsub('Slovak Republic', 'Slovakia', remittance_outflows$`Migrant remittance outflows (US$ million)`)
+
+# Pivot longer for annual observations for each EU member state
 
 remittance_outflows <- remittance_outflows %>%
   pivot_longer(
@@ -157,7 +175,11 @@ remittance_outflows <- remittance_outflows %>%
   clean_names() %>%
   rename("country_name" = migrant_remittance_outflows_us_million)
 
+# Delete unnecessary columns
+
 remittance_outflows <- remittance_outflows[,-c(2:22)]
+
+# Merging data and selecting columns we are interested in
 
 full_data <- full_data %>%
   left_join(remittance_outflows, by = c("country_name"="country_name", "year"="year")) %>%
@@ -172,6 +194,8 @@ mydata <- full_data %>%
   summarize(sum_remittance_usd = sum(remittances_in_usd)) %>%
   ungroup() %>%
   mutate(year = as.numeric(as.character(year)))
+
+# Saving my data as RDS files, which I will then load into app.R
 
 saveRDS(object = full_data,file = "shiny/full_data.rds")
 

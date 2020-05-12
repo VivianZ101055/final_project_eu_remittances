@@ -17,37 +17,48 @@ library(base)
 library(vembedr)
 library(tidyverse)
 
+# I load in wrld_simpl, a large spatial polygons dataframe that tells us where
+# the borders of countries are located on the Leaflet map.
+
 data(wrld_simpl)
+
+# I load in my RDS files, which I saved in loading_cleaning.Rmd.
 
 full_data <- readRDS("full_data.rds")
 
+eunames <- readRDS("eunames.rds")
+
+mychoices <- readRDS("mychoices.rds")
+
+# I make sure the year column in full_data is a numeric.
+
 full_data$year <- as.numeric(full_data$year)
 
-# full_data <- full_data %>% 
-#   mutate(gdp = 100 * remittances_in_usd / remittances_percent_gdp / 100000)
-
-# gdp_on_percent <- rstanarm::stan_glm(remittances_percent_gdp ~ gdp, data = full_data, refresh = 0)
+# Fixing full_data by making sure the units are consistent and using log() to
+# prepare to run the regression.
 
 full_data <- full_data %>% 
   filter(!is.na(remittances_in_usd), !is.na(remittances_percent_gdp)) %>% 
   mutate(gdp = 100 * remittances_in_usd / remittances_percent_gdp / 100000) %>%
   mutate(log_remittances_percent_gdp = log(remittances_percent_gdp), log_gdp = log(gdp))
 
+# Using linear model to set up my regression (with different models).
+
 gdp_on_percent <- lm(remittances_percent_gdp ~ log_gdp, data = full_data)
 
 predicted <- data.frame(remittances_percent_pred = predict(gdp_on_percent, full_data), gdp = full_data$gdp)
 
-eunames <- readRDS("eunames.rds")
-
-mychoices <- readRDS("mychoices.rds")
+regression <- lm(log_remittances_percent_gdp ~ log_gdp, data = full_data)
 
 # Considers only the polygons for the EU countries.
 
 wrld_simpl_data <- wrld_simpl[which(wrld_simpl@data$NAME %in% eunames), ]
 
+# Prepares bins for Leaflet maps plot.
+
 bins <- c(0,100,500,1000,3000,5000,7000,10000,15000,25000,30000)
 
-regression <- lm(log_remittances_percent_gdp ~ log_gdp, data = full_data)
+# Creating a GT table to be used below.
 
 my_table <- regression %>%
   tidy(conf.int = TRUE) %>%
@@ -239,12 +250,19 @@ server <- function(input, output){
          state. If the graph does not contain a vertical line, the state joined 
          the EU prior to the year 2000.</p>")})
   
+  #---------------------------------------------------------------------------
+  #------------Graph for remittance inflows of a given country----------------
+  
+  # Setup for my dropdown country menu.
+  
   graph_react <- reactive({
     
     full_data %>% dplyr::filter(country_name == input$mycountry) %>%
       na.omit()
     
   })
+  
+  # Setup for my country plot (inflows).
 
   output$distPlot <- renderPlotly({
     
@@ -273,6 +291,8 @@ server <- function(input, output){
     ggplotly(p, tooltip = "text")
 
     })
+  
+  # Setup for my country plot (outflows).
   
   output$distOutflows <- renderPlotly({
     
@@ -309,7 +329,7 @@ server <- function(input, output){
   })
   
   #---------------------------------------------------------------------------
-  #------------Inflow map description-----------------------------------------
+  #------------Inflow map-----------------------------------------
   
   output$inflow_map_description <- renderText({
     HTML("<p><b>Description</b></br></p>
@@ -319,12 +339,16 @@ server <- function(input, output){
          did not specify the rates the World Bank used to convert rates from
          Euros and other European currencies to USD.</p>")})
   
+  # Setup for my year slider.
+  
   map_data_react <- reactive({
     
     full_data %>% filter(year == input$myyearinflows) %>%
       na.omit()
     
   })
+  
+  # Creating a leaflet chloropleth map for inflows.
   
   output$inflows <- renderLeaflet({
     
@@ -366,17 +390,20 @@ server <- function(input, output){
   })
   
   #---------------------------------------------------------------------------
-  #------------Outflow map description----------------------------------------
+  #------------Outflow map----------------------------------------
   
   output$outflow_map_description <- renderText({
     HTML("<p><b>Description</b></br></p>
          <p>Select a year, then hover over an individual country to learn about that country's quantity of remittance outflows. Please note that all values are in USD.</p>")})
   
+  # Setup for outflow map slider.
   
   map_data <- reactive({
     full_data %>% dplyr::filter(year == input$myyearoutflows) %>%
       na.omit()
   })
+  
+  # Creating an outflow chloropleth Leaflet map.
   
   output$outflows <- renderLeaflet({
     pal_val <- map_data()
@@ -408,7 +435,12 @@ server <- function(input, output){
                 position = "bottomright")
     
   })
+  
+  #--------------------------------------------------------------------------
+  #-----------------------Regression-----------------------------------------
 
+  # First regression model
+  
   output$inflow_outflow <- renderPlotly({
     
     myplot1 <- ggplot(full_data, aes(x = gdp, y = remittances_percent_gdp)) +
@@ -423,6 +455,8 @@ server <- function(input, output){
     
   })
   
+  # Second regression model
+  
   output$log_plot <- renderPlotly({
     myplot2 <- ggplot(full_data, aes(x = log_gdp, y = log_remittances_percent_gdp)) +
       geom_point(color = "blue", size = 0.5) +
@@ -433,6 +467,8 @@ server <- function(input, output){
            y = "Log of Remittance Inflow as a Percentage of GDP") +
       theme_classic()
   })
+  
+  # GT table showing numbers for regression
   
   output$table <- render_gt(
     expr = my_table,
