@@ -8,3 +8,8 @@ final_project.Rproj
 shiny/.DS_Store
 shiny/shiny_files/.DS_Store
 shiny/rsconnect/
+temp/
+temporary/
+shiny/data/ext_lt_intratrd.tsv
+shiny/data/migr_emi1ctz.tsv
+shiny/shiny.Rproj

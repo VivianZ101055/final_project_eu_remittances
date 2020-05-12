@@ -14,6 +14,7 @@ library(maps)
 library(gt)
 library(broom)
 library(base)
+library(vembedr)
 library(tidyverse)
 
 data(wrld_simpl)
@@ -72,7 +73,7 @@ my_table <- regression %>%
 ui <- fluidPage(
   theme = shinytheme("flatly"),
   
-  navbarPage(tags$b("EU Remittance Flows"),
+  navbarPage("EU Remittance Flows",
              tabPanel("Flows",
                       h1("European Union Remittance Flows",
                          align = "center"),
@@ -105,7 +106,8 @@ ui <- fluidPage(
                           br(),
                           tabsetPanel(
                             tabPanel("Country Outflows",
-                                      plotlyOutput("distOutflows")))
+                                      plotlyOutput("distOutflows"))),
+                          br()
                           ))),
 
              navbarMenu("Remittance Maps",
@@ -146,8 +148,8 @@ ui <- fluidPage(
                             relationship between the size of the economy and 
                             reliance on remittances, based on data from 2000 to 
                             2018 in EU member states. Since this the data does 
-                            not fit a linear model, I used a log scale on the 
-                            GDP variable. Smaller economies tend to have higher 
+                            not fit a linear model, I used a logarithmic model. 
+                            Smaller economies tend to have higher 
                             reliance on remittances. When we get to medium 
                             economies, the correlation between remittance inflows 
                             and GDP becomes noticeably less strong. There is less 
@@ -160,7 +162,7 @@ ui <- fluidPage(
                             GDPs also tend to have larger inflows of remittances.
                             If we look at the Table to Understand Regression 
                             Model 2, we can say that a country with a 1% higher 
-                            GDP tends to have a 0.36% smaller value for 
+                            GDP tends to have a 0.37% smaller value for 
                             remittance inflows as a percentage of GDP."),
                           p("Obviously, there are many confounding variables and 
                             I am not making any causal claims in my project.")
@@ -188,8 +190,11 @@ ui <- fluidPage(
                       h4(tags$b("About Me")),
                       p("Hi! I am Vivian Zhang, a first year at Harvard College 
                         studying Economics with a secondary in Computer Science! 
-                        You can reach me at vivianzhang@college.harvard.edu. 
-                        The code for this project can be accessed from",
+                        My email is vivianzhang@college.harvard.edu"),
+                      p("View my LinkedIn",
+                        a(href="https://www.linkedin.com/in/vivian-zhang-101055/",
+                          "here.")),
+                      p("The code for this project can be accessed from",
                         a(href="https://github.com/VivianZ101055", "my github 
                           repository.")),
                       h4(tags$b("Data Source")),
@@ -203,8 +208,12 @@ ui <- fluidPage(
                       h4(tags$b("Acknowledgements:")),
                       p("Thank you to Preceptor David Kane, my Teaching Fellow
                       (June Hwang), and all the members of GOV 1005 for 
-                      introducing me to data science and and R.")
+                      introducing me to data science and and R."),
+                      fluidRow(column(4), column(4, 
+                                                 embed_url("https://youtu.be/o6nmz1-PBmI"),
+                                                 column(4)))
              )))
+
 
 #-----------------------------------------------
 #--------------------Server---------------------
@@ -222,10 +231,6 @@ server <- function(input, output){
   #---------------------------------------------------------------------------
   #------------Inflow map title-----------------------------------------------
   
-  # output$graph_title <- renderText({
-  #   paste("Visualizing Remittance Inflows and Outflows by Country")
-  # })
-  # 
   output$graph_description <- renderText({
     HTML("<p><b>Description</b></br></p>
          <p>In the dropdown menu, select a country. Hover over points 
@@ -298,11 +303,11 @@ server <- function(input, output){
   
   #---------------------------------------------------------------------------
   #------------Inflow map title-----------------------------------------------
-
+  
   output$inflow_map_title <- renderText({
     paste("Total Amount of Remittance Inflows in ", input$myyearinflows)
   })
-
+  
   #---------------------------------------------------------------------------
   #------------Inflow map description-----------------------------------------
   
@@ -335,18 +340,18 @@ server <- function(input, output){
       setView(30, 55, 3) %>%
       setMaxBounds(lng1 = 15, lat1 = 35, lng2 = 20, lat2 = 70) %>%
       addPolygons(
-                  weight = 2,
-                  opacity = 1,
-                  color = "black",
-                  fillColor = ~pal(as.numeric(pal_val$remittances_in_usd)),
-                  fillOpacity = 1,
-                  label = ~paste0("Country: ", 
-                                  wrld_simpl_data@data$NAME, ", ", 
-                                  "Total Remittances: $", 
-                                  round(pal_val$remittances_in_usd,0),
-                                  " Mln", sep=""),
-                  highlight = highlightOptions(weight = 3, color = "white", 
-                                               bringToFront = TRUE)) %>%
+        weight = 2,
+        opacity = 1,
+        color = "black",
+        fillColor = ~pal(as.numeric(pal_val$remittances_in_usd)),
+        fillOpacity = 1,
+        label = ~paste0("Country: ", 
+                        wrld_simpl_data@data$NAME, ", ", 
+                        "Total Remittances: $", 
+                        round(pal_val$remittances_in_usd,0),
+                        " Mln", sep=""),
+        highlight = highlightOptions(weight = 3, color = "white", 
+                                     bringToFront = TRUE)) %>%
       addLegend(pal = pal, values = ~full_data$remittances_in_usd, opacity = 0.7,
                 title = "Remittances in Millions of USD",
                 position = "bottomright")
@@ -377,7 +382,7 @@ server <- function(input, output){
     pal_val <- map_data()
     pal <- colorBin(palette = "viridis", domain = pal_val$remittances_outflows,
                     bins = bins)
-
+    
     leaflet(wrld_simpl_data, options = leafletOptions(dragging = TRUE,
                                                       minZoom = 3.45,
                                                       maxZoom = 6)) %>%
@@ -403,7 +408,7 @@ server <- function(input, output){
                 position = "bottomright")
     
   })
-  
+
   output$inflow_outflow <- renderPlotly({
     
     myplot1 <- ggplot(full_data, aes(x = gdp, y = remittances_percent_gdp)) +
